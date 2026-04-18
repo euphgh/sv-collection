@@ -1,5 +1,6 @@
--f scripts/compile.f
+-f filelist/lib.f
+-f filelist/testbench.f
 -Weverything 
--Werror=implicit-net 
--Werror=unused-port 
+-Werror=unused
 --std 1800-2017
+--compat vcs

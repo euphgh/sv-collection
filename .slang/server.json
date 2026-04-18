@@ -10,7 +10,7 @@
       ]
     }
   ],
-  "flags": "-Weverything -Werror=implicit-net -Werror=unused-port --std 1800-2017",
+  "flags": "-f scripts/slang.f",
   "inlayHints": {
     "portTypes": true,
     "orderedInstanceNames": true,
