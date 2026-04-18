@@ -12,7 +12,7 @@
 // 3. `*_into()` 采用“插入到 result”语义，不会清空 `result` 既有内容。
 //
 // 提供的接口：
-//   insert / delete / contains_key / contains_set
+//   insert / delete / contains_key / contains_set / equals
 //   to_queue / to_aa
 //   union_into / get_union / union_with
 //   intersect_into / get_intersect / intersect_with
@@ -46,6 +46,19 @@ class set_util #(type KEY_T = logic [31:0]);
 
         return 1;
     endfunction : contains_set
+
+    // 集合相等只关心 key 集是否完全一致，不关心底层 bit value。
+    static function bit equals(const ref set_t lhs, const ref set_t rhs);
+        if (lhs.size() != rhs.size())
+            return 0;
+
+        foreach (lhs[key]) begin
+            if (!rhs.exists(key))
+                return 0;
+        end
+
+        return 1;
+    endfunction : equals
 
     // 将集合拷贝成 queue，顺序遵循关联数组的遍历顺序。
     static function q_of_data to_queue(const ref set_t lhs);

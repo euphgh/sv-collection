@@ -24,6 +24,7 @@
 //   get_keys / get_values
 class aa_util #(type KEY_T = logic [7:0], type VAL_T = logic [7:0]);
     typedef VAL_T aa_t[KEY_T];
+    typedef VAL_T map_t[KEY_T];
 
     typedef set_util#(KEY_T) key_set_util;
     typedef set_util#(VAL_T) val_set_util;
