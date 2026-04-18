@@ -1,8 +1,5 @@
-`timescale 1ns / 1ps
-
-`include "aa_util.svh"
-
 module collection_smoke_tb;
+    import collection::*;
     typedef set_util#(int unsigned) int_set_util_t;
     typedef int_set_util_t::set_t int_set_t;
 

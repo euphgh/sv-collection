@@ -1,0 +1,5 @@
+-f scripts/compile.f
+-Weverything 
+-Werror=implicit-net 
+-Werror=unused-port 
+--std 1800-2017
