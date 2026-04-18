@@ -19,6 +19,8 @@
   Detailed coverage for all `set_util` APIs, including key-set equality
 - `aa_util_tb.sv`
   Detailed coverage for all `aa_util` APIs, including key+value equality
+- `multimap_util_tb.sv`
+  Detailed coverage for `aa of set` semantics, including per-key set merge/intersect/diff
 
 ## Running Slang Checks
 
@@ -26,6 +28,12 @@ Run all files listed in `filelist/lib.f` and `filelist/testbench.f`:
 
 ```bash
 scripts/check_collection_core.sh
+```
+
+Check the native nested-associative-array `multimap_util` variant:
+
+```bash
+slang -D COLLECTION_USE_NESTED_AA_MULTIMAP -f scripts/slang.f
 ```
 
 ## Running XSim
@@ -41,6 +49,7 @@ Run a specific top-level testbench:
 ```bash
 scripts/run_collection_xsim.sh set_util_tb
 scripts/run_collection_xsim.sh aa_util_tb
+scripts/run_collection_xsim.sh multimap_util_tb
 ```
 
 Open a specific test in GUI mode:
@@ -57,6 +66,7 @@ Passing tests print one of:
 collection_smoke_tb: PASS
 set_util_tb: PASS
 aa_util_tb: PASS
+multimap_util_tb: PASS
 ```
 
 Failures stop immediately using `$fatal(1)` after printing a descriptive message.
@@ -65,6 +75,9 @@ Failures stop immediately using `$fatal(1)` after printing a descriptive message
 
 - Prefer one focused testbench per utility or container type
 - Keep checks local and explicit; avoid hidden scoreboard logic for small library tests
+- `multimap_util.svh` currently has two implementations in the same file:
+  - default XSim-compatible bucket path
+  - macro-enabled nested-AA path for tools that support nested associative arrays better
 - When adding APIs, update both:
   - `docs/test-plan.md`
   - `filelist/testbench.f`
