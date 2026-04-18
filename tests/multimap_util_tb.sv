@@ -22,9 +22,9 @@ module multimap_util_tb;
         int_mmap_util_t::insert(mmap, 1, 20);
         int_mmap_util_t::insert(mmap, 3, 30);
 
-        check_true(int_mmap_util_t::num_keys(mmap) == 2, "num_keys should count distinct keys");
-        check_true(int_mmap_util_t::num_values(mmap, 1) == 2, "duplicate insert should not increase value-set size");
-        check_true(int_mmap_util_t::num_values(mmap, 7) == 0, "num_values should return zero for missing key");
+        check_true(int_mmap_util_t::num_values(mmap) == 3, "num_values should count all values across all keys");
+        check_true(int_mmap_util_t::num_values_at_key(mmap, 1) == 2, "duplicate insert should not increase value-set size");
+        check_true(int_mmap_util_t::num_values_at_key(mmap, 7) == 0, "num_values_at_key should return zero for missing key");
         check_true(int_mmap_util_t::has_key(mmap, 1), "has_key should find existing key");
         check_true(!int_mmap_util_t::has_key(mmap, 2), "has_key should reject absent key");
         check_true(int_mmap_util_t::contains_value(mmap, 1, 10), "contains_value should find inserted pair");
@@ -49,7 +49,8 @@ module multimap_util_tb;
         int_mmap_util_t::add_values(mmap, 2, values);
         int_mmap_util_t::insert(mmap, 4, 40);
 
-        check_true(int_mmap_util_t::num_values(mmap, 2) == 2, "add_values should merge all values into key");
+        check_true(int_mmap_util_t::num_values(mmap) == 3, "num_values should sum values from all keys");
+        check_true(int_mmap_util_t::num_values_at_key(mmap, 2) == 2, "add_values should merge all values into key");
 
         keys = int_mmap_util_t::get_keys(mmap);
         check_true(keys.size() == 2, "get_keys should return all keys in multimap");
@@ -104,18 +105,19 @@ module multimap_util_tb;
         int_mmap_util_t::insert(result, 99, 999);
 
         int_mmap_util_t::merge_into(lhs, rhs, result);
-        check_true(int_mmap_util_t::num_keys(result) == 3, "merge_into should fully overwrite old result keys");
-        check_true(int_mmap_util_t::num_values(result, 1) == 3, "merge_into should union value-sets on shared key");
+        check_true(int_mmap_util_t::num_values(result) == 5, "merge_into should count all merged values across keys");
+        check_true(int_mmap_util_t::num_values_at_key(result, 1) == 3, "merge_into should union value-sets on shared key");
         check_true(int_mmap_util_t::contains_value(result, 1, 10) && int_mmap_util_t::contains_value(result, 1, 11) && int_mmap_util_t::contains_value(result, 1, 12), "merge_into should retain all distinct values");
         check_true(int_mmap_util_t::has_key(result, 2) && int_mmap_util_t::has_key(result, 3), "merge_into should include lhs-only and rhs-only keys");
         check_true(!result.exists(99), "merge_into should discard stale result keys");
 
         exact_merge = int_mmap_util_t::get_merge(lhs, rhs);
-        check_true(int_mmap_util_t::num_keys(exact_merge) == 3, "get_merge should return pure merge result");
+        check_true(int_mmap_util_t::num_values(exact_merge) == 5, "get_merge should return merged total value count");
+        check_true(int_mmap_util_t::contains_value(exact_merge, 1, 12), "get_merge should include rhs-only value under shared key");
 
         int_mmap_util_t::merge_with(lhs, rhs);
-        check_true(int_mmap_util_t::num_keys(lhs) == 3, "merge_with should mutate lhs into merged multimap");
-        check_true(int_mmap_util_t::num_values(lhs, 1) == 3 && int_mmap_util_t::contains_value(lhs, 3, 30), "merge_with should union shared key and append new key");
+        check_true(int_mmap_util_t::num_values(lhs) == 5, "merge_with should update total value count after merge");
+        check_true(int_mmap_util_t::num_values_at_key(lhs, 1) == 3 && int_mmap_util_t::contains_value(lhs, 3, 30), "merge_with should union shared key and append new key");
     endtask
 
     task automatic test_intersect_family();
@@ -137,16 +139,17 @@ module multimap_util_tb;
         int_mmap_util_t::insert(result, 99, 999);
 
         int_mmap_util_t::intersect_into(lhs, rhs, result);
-        check_true(int_mmap_util_t::num_keys(result) == 1, "intersect_into should keep only keys with non-empty value intersection");
-        check_true(int_mmap_util_t::has_key(result, 1) && int_mmap_util_t::num_values(result, 1) == 1 && int_mmap_util_t::contains_value(result, 1, 11), "intersect_into should keep value-set intersection on shared key");
+        check_true(int_mmap_util_t::num_values(result) == 1, "intersect_into should update total value count to intersection size");
+        check_true(int_mmap_util_t::has_key(result, 1) && int_mmap_util_t::num_values_at_key(result, 1) == 1 && int_mmap_util_t::contains_value(result, 1, 11), "intersect_into should keep value-set intersection on shared key");
         check_true(!result.exists(99), "intersect_into should fully overwrite prior result");
 
         exact_intersect = int_mmap_util_t::get_intersect(lhs, rhs);
-        check_true(int_mmap_util_t::num_keys(exact_intersect) == 1 && int_mmap_util_t::contains_value(exact_intersect, 1, 11), "get_intersect should return pure intersection result");
+        check_true(int_mmap_util_t::num_values(exact_intersect) == 1, "get_intersect should return intersected total value count");
+        check_true(int_mmap_util_t::contains_value(exact_intersect, 1, 11), "get_intersect should preserve intersected value");
 
         int_mmap_util_t::intersect_with(lhs, rhs);
-        check_true(int_mmap_util_t::num_keys(lhs) == 1 && int_mmap_util_t::has_key(lhs, 1), "intersect_with should shrink lhs to keys with non-empty intersection");
-        check_true(int_mmap_util_t::num_values(lhs, 1) == 1 && int_mmap_util_t::contains_value(lhs, 1, 11), "intersect_with should preserve only intersected values");
+        check_true(int_mmap_util_t::num_values(lhs) == 1, "intersect_with should shrink total value count to remaining intersection");
+        check_true(int_mmap_util_t::num_values_at_key(lhs, 1) == 1 && int_mmap_util_t::contains_value(lhs, 1, 11), "intersect_with should preserve only intersected values");
     endtask
 
     task automatic test_diff_family();
@@ -167,18 +170,19 @@ module multimap_util_tb;
         int_mmap_util_t::insert(result, 99, 999);
 
         int_mmap_util_t::diff_into(lhs, rhs, result);
-        check_true(int_mmap_util_t::num_keys(result) == 2, "diff_into should keep keys with non-empty remainder only");
-        check_true(int_mmap_util_t::num_values(result, 1) == 1 && int_mmap_util_t::contains_value(result, 1, 10), "diff_into should subtract rhs values from shared key");
-        check_true(int_mmap_util_t::num_values(result, 3) == 1 && int_mmap_util_t::contains_value(result, 3, 30), "diff_into should preserve lhs-only key");
+        check_true(int_mmap_util_t::num_values(result) == 2, "diff_into should update total value count after subtraction");
+        check_true(int_mmap_util_t::num_values_at_key(result, 1) == 1 && int_mmap_util_t::contains_value(result, 1, 10), "diff_into should subtract rhs values from shared key");
+        check_true(int_mmap_util_t::num_values_at_key(result, 3) == 1 && int_mmap_util_t::contains_value(result, 3, 30), "diff_into should preserve lhs-only key");
         check_true(!int_mmap_util_t::has_key(result, 2), "diff_into should drop key whose value-set becomes empty");
         check_true(!result.exists(99), "diff_into should fully overwrite prior result");
 
         exact_diff = int_mmap_util_t::get_diff(lhs, rhs);
-        check_true(int_mmap_util_t::num_keys(exact_diff) == 2 && int_mmap_util_t::contains_value(exact_diff, 1, 10) && int_mmap_util_t::contains_value(exact_diff, 3, 30), "get_diff should return expected multimap difference");
+        check_true(int_mmap_util_t::num_values(exact_diff) == 2, "get_diff should return remaining total value count");
+        check_true(int_mmap_util_t::contains_value(exact_diff, 1, 10) && int_mmap_util_t::contains_value(exact_diff, 3, 30), "get_diff should preserve expected remaining values");
 
         int_mmap_util_t::diff_with(lhs, rhs);
-        check_true(int_mmap_util_t::num_keys(lhs) == 2, "diff_with should mutate lhs to difference result");
-        check_true(int_mmap_util_t::num_values(lhs, 1) == 1 && int_mmap_util_t::contains_value(lhs, 1, 10), "diff_with should preserve non-overlapping values");
+        check_true(int_mmap_util_t::num_values(lhs) == 2, "diff_with should update total value count to remaining values");
+        check_true(int_mmap_util_t::num_values_at_key(lhs, 1) == 1 && int_mmap_util_t::contains_value(lhs, 1, 10), "diff_with should preserve non-overlapping values");
         check_true(int_mmap_util_t::has_key(lhs, 3) && !int_mmap_util_t::has_key(lhs, 2), "diff_with should remove empty shared key result");
     endtask
 

@@ -5,7 +5,9 @@
 This plan covers the current utility-only collection layer:
 
 - `set_util.svh`
+- `set_array_util.svh`
 - `aa_util.svh`
+- `aa_array_util.svh`
 - `multimap_util.svh`
 
 The goal is to validate both API semantics and the assumptions documented in the source comments.
@@ -21,7 +23,9 @@ The goal is to validate both API semantics and the assumptions documented in the
 2. Focused unit coverage
 
 - `set_util_tb.sv`
+- `set_array_util_tb.sv`
 - `aa_util_tb.sv`
+- `aa_array_util_tb.sv`
 - Broader API-by-API checking, including edge cases and mutating behavior
 
 3. Multi-value map coverage
@@ -136,6 +140,91 @@ The goal is to validate both API semantics and the assumptions documented in the
 - `get_values`
   - duplicate values deduplicated naturally
 
+### `set_array_util`
+
+- `insert`
+  - insert into selected bank
+- `delete`
+  - delete from selected bank
+- `contains_key`
+  - present key in selected bank
+  - absent key in selected bank
+- `contains_set`
+  - subset in selected bank
+- `contains_set_array`
+  - selected bank contains all rhs bank sets
+- `equals`
+  - elementwise equality
+  - bank mismatch detection
+- `union_into`
+  - per-bank union inserted into pre-populated result
+  - unrelated result bank contents preserved
+- `get_union`
+  - pure per-bank union result
+- `union_with`
+  - in-place per-bank union
+- `intersect_into`
+  - per-bank intersection inserted into pre-populated result
+- `get_intersect`
+  - pure per-bank intersection result
+- `intersect_with`
+  - in-place per-bank intersection
+- `diff_into`
+  - per-bank difference inserted into pre-populated result
+- `get_diff`
+  - pure per-bank difference result
+- `diff_with`
+  - in-place per-bank difference
+- `sprint` / `print`
+  - empty and populated array formatting
+
+### `aa_array_util`
+
+- `contains_key`
+  - present key in selected bank
+  - absent key in selected bank
+- `contains`
+  - sub-map in selected bank
+- `contains_keys`
+  - selected bank key subset
+- `contains_aa_array`
+  - selected bank contains every rhs bank sub-map
+- `equals`
+  - elementwise equality
+  - bank mismatch detection
+- `merge_into`
+  - per-bank merge with rhs overwrite semantics
+  - result bank fully overwritten
+- `get_merge`
+  - pure per-bank merge result
+- `merge_with`
+  - in-place per-bank merge
+- `get_intersect_merge_with`
+  - returns per-bank overwritten entries
+  - mutates lhs to merged result
+- `intersect_into`
+  - per-bank key intersection
+  - lhs payload preserved
+  - result bank fully overwritten
+- `get_intersect`
+  - pure per-bank intersection result
+- `intersect_with`
+  - in-place per-bank intersection
+- `diff_into`
+  - per-bank key difference
+  - lhs payload preserved
+  - result bank fully overwritten
+- `get_diff`
+  - pure per-bank difference result
+- `diff_with`
+  - in-place per-bank difference
+- `get_keys`
+  - selected bank key projection
+- `get_key_sets`
+  - all-bank key-set projection
+- `sprint` / `print`
+  - table-style formatting, not checked in regression
+
 ### `multimap_util`
 
 Implementation note:
@@ -149,9 +238,9 @@ Implementation note:
   - duplicate value deduplication under same key
 - `add_values`
   - bulk-add value-set to one key
-- `num_keys`
-  - count distinct keys only
 - `num_values`
+  - total value count across all keys
+- `num_values_at_key`
   - existing key
   - missing key
 - `has_key`
@@ -214,10 +303,14 @@ All testbenches must:
 
 - `set_util::*_into()` preserves unrelated pre-existing content in `result`
 - `set_util::equals()` only compares key sets
+- `set_array_util::*_into()` preserves pre-existing content in each result bank
+- `set_array_util::*_with()` applies the corresponding `set_util` operation bank by bank
 - `aa_util::*_into()` fully overwrites `result`
 - `aa_util::equals()` compares both key sets and values
 - `aa_util::intersect_*` and `aa_util::diff_*` preserve payload from lhs
 - `aa_util::merge_*` resolves key conflicts in favor of rhs
+- `aa_array_util::*_into()` fully overwrites each result bank
+- `aa_array_util::*_with()` applies the corresponding `aa_util` operation bank by bank
 - `multimap_util::*_into()` fully overwrites `result`
 - `multimap_util::merge_*` unions value-sets on shared keys
 - `multimap_util::intersect_*` and `diff_*` drop keys whose result value-set is empty

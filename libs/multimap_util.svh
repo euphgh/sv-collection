@@ -37,9 +37,7 @@ class multimap_util #(type KEY_T = logic [7:0],
     static function string sprint(const ref multimap_t mmap, input string name = "mmap");
         string s;
         int cnt = 0;
-        int unsigned key_count;
-
-        key_count = num_keys(mmap);
+        int key_count = mmap.size();
 
         if (key_count == 0)
             return $sformatf("%s = '{}  // empty, size=0", name);
@@ -54,7 +52,7 @@ class multimap_util #(type KEY_T = logic [7:0],
             cnt++;
             if (cnt >= 100) begin
                 int remaining;
-                remaining = int'(key_count) - cnt;
+                remaining = key_count - cnt;
                 s = {s, $sformatf("\n  ... (%0d more entries)", remaining)};
                 break;
             end
@@ -91,24 +89,24 @@ class multimap_util #(type KEY_T = logic [7:0],
 `endif
     endfunction : add_values
 
-    // 返回 key 的个数，而不是所有 value 的总数。
-    static function int unsigned num_keys(const ref multimap_t mmap);
+    // 返回所有 key 下 value 的总数。
+    static function int unsigned num_values(const ref multimap_t mmap);
         int unsigned count = 0;
 
         foreach (mmap[key]) begin
 `ifndef COLLECTION_USE_NESTED_AA_MULTIMAP
             if (mmap[key] != null)
-                count++;
+                count += $unsigned(mmap[key].values.size());
 `else
-            count++;
+            count += $unsigned(mmap[key].size());
 `endif
         end
 
         return count;
-    endfunction : num_keys
+    endfunction : num_values
 
     // 返回指定 key 下的 value 数量；不存在的 key 视为空集合。
-    static function int unsigned num_values(const ref multimap_t mmap, input KEY_T key);
+    static function int unsigned num_values_at_key(const ref multimap_t mmap, input KEY_T key);
 `ifndef COLLECTION_USE_NESTED_AA_MULTIMAP
         if (!mmap.exists(key) || (mmap[key] == null))
             return 0;
@@ -118,7 +116,7 @@ class multimap_util #(type KEY_T = logic [7:0],
             return 0;
         return $unsigned(mmap[key].size());
 `endif
-    endfunction : num_values
+    endfunction : num_values_at_key
 
     // 判断是否存在指定 key。
     static function bit has_key(const ref multimap_t mmap, input KEY_T key);
@@ -163,7 +161,7 @@ class multimap_util #(type KEY_T = logic [7:0],
 
     // 严格相等：key 集必须一致，且每个 key 下的 value-set 也必须一致。
     static function bit equals(const ref multimap_t lhs, const ref multimap_t rhs);
-        if (num_keys(lhs) != num_keys(rhs))
+        if (lhs.size() != rhs.size())
             return 0;
 
         foreach (lhs[key]) begin

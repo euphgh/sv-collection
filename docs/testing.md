@@ -17,10 +17,14 @@
   Minimal end-to-end smoke coverage
 - `set_util_tb.sv`
   Detailed coverage for all `set_util` APIs, including key-set equality
+- `set_array_util_tb.sv`
+  Detailed coverage for fixed-size array-of-set APIs, including per-bank union/intersect/diff
 - `aa_util_tb.sv`
   Detailed coverage for all `aa_util` APIs, including key+value equality
+- `aa_array_util_tb.sv`
+  Detailed coverage for fixed-size array-of-aa APIs, excluding print-format verification
 - `multimap_util_tb.sv`
-  Detailed coverage for `aa of set` semantics, including per-key set merge/intersect/diff
+  Detailed coverage for `aa of set` semantics, including total value counting and per-key set merge/intersect/diff
 
 ## Running Slang Checks
 
@@ -48,7 +52,9 @@ Run a specific top-level testbench:
 
 ```bash
 scripts/run_collection_xsim.sh set_util_tb
+scripts/run_collection_xsim.sh set_array_util_tb
 scripts/run_collection_xsim.sh aa_util_tb
+scripts/run_collection_xsim.sh aa_array_util_tb
 scripts/run_collection_xsim.sh multimap_util_tb
 ```
 
@@ -65,7 +71,9 @@ Passing tests print one of:
 ```text
 collection_smoke_tb: PASS
 set_util_tb: PASS
+set_array_util_tb: PASS
 aa_util_tb: PASS
+aa_array_util_tb: PASS
 multimap_util_tb: PASS
 ```
 
