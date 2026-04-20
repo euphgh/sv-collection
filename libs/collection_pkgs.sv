@@ -4,4 +4,5 @@ package collection;
     `include "aa_util.svh"
     `include "aa_array_util.svh"
     `include "multimap_util.svh"
+    `include "multimap_array_util.svh"
 endpackage

@@ -25,6 +25,8 @@
   Detailed coverage for fixed-size array-of-aa APIs, excluding print-format verification
 - `multimap_util_tb.sv`
   Detailed coverage for `aa of set` semantics, including total value counting and per-key set merge/intersect/diff
+- `multimap_array_util_tb.sv`
+  Detailed coverage for fixed-size array-of-multimap APIs, excluding print-format verification
 
 ## Running Slang Checks
 
@@ -56,6 +58,7 @@ scripts/run_collection_xsim.sh set_array_util_tb
 scripts/run_collection_xsim.sh aa_util_tb
 scripts/run_collection_xsim.sh aa_array_util_tb
 scripts/run_collection_xsim.sh multimap_util_tb
+scripts/run_collection_xsim.sh multimap_array_util_tb
 ```
 
 Open a specific test in GUI mode:
@@ -75,6 +78,7 @@ set_array_util_tb: PASS
 aa_util_tb: PASS
 aa_array_util_tb: PASS
 multimap_util_tb: PASS
+multimap_array_util_tb: PASS
 ```
 
 Failures stop immediately using `$fatal(1)` after printing a descriptive message.

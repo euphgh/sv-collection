@@ -9,6 +9,7 @@ This plan covers the current utility-only collection layer:
 - `aa_util.svh`
 - `aa_array_util.svh`
 - `multimap_util.svh`
+- `multimap_array_util.svh`
 
 The goal is to validate both API semantics and the assumptions documented in the source comments.
 
@@ -31,6 +32,7 @@ The goal is to validate both API semantics and the assumptions documented in the
 3. Multi-value map coverage
 
 - `multimap_util_tb.sv`
+- `multimap_array_util_tb.sv`
 - Focused coverage for `aa of set` semantics, especially per-key set operations
 
 ## Coverage Matrix
@@ -290,6 +292,61 @@ Implementation note:
   - default XSim-compatible path
   - nested-AA path accepted by `slang`
 
+### `multimap_array_util`
+
+- `insert`
+  - insert pair into selected bank
+- `add_values`
+  - bulk-add values into selected bank/key
+- `num_values`
+  - total value count across all banks
+- `num_values_at_bank`
+  - total value count in selected bank
+- `num_values_at_key`
+  - selected bank/key value count
+- `contains_key`
+  - present key in selected bank
+  - absent key in selected bank
+- `contains_value`
+  - present pair in selected bank
+  - absent pair in selected bank
+- `contains`
+  - sub-multimap in selected bank
+- `contains_multimap_array`
+  - selected bank contains each rhs bank sub-multimap
+- `equals`
+  - elementwise equality
+  - bank mismatch detection
+- `merge_into`
+  - per-bank value-set union semantics
+  - result bank fully overwritten
+- `get_merge`
+  - pure per-bank merge result
+- `merge_with`
+  - in-place per-bank merge
+- `intersect_into`
+  - per-bank value-set intersection
+  - empty bank results dropped
+- `get_intersect`
+  - pure per-bank intersection result
+- `intersect_with`
+  - in-place per-bank intersection
+- `diff_into`
+  - per-bank value-set difference
+  - empty bank results dropped
+- `get_diff`
+  - pure per-bank difference result
+- `diff_with`
+  - in-place per-bank difference
+- `get_keys`
+  - selected bank key projection
+- `get_key_sets`
+  - all-bank key-set projection
+- `get_values`
+  - selected bank/key value projection
+- `sprint` / `print`
+  - simple line-based formatting, not checked in regression
+
 ## Pass Criteria
 
 All testbenches must:
@@ -315,3 +372,5 @@ All testbenches must:
 - `multimap_util::merge_*` unions value-sets on shared keys
 - `multimap_util::intersect_*` and `diff_*` drop keys whose result value-set is empty
 - `multimap_util` supports two in-file implementations selected by `COLLECTION_USE_NESTED_AA_MULTIMAP`
+- `multimap_array_util::*_into()` fully overwrites each result bank
+- `multimap_array_util::*_with()` applies the corresponding `multimap_util` operation bank by bank
