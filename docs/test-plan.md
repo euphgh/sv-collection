@@ -231,8 +231,8 @@ The goal is to validate both API semantics and the assumptions documented in the
 
 Implementation note:
 
-- default path uses an XSim-compatible bucket-handle wrapper around each value-set
-- defining `COLLECTION_USE_NESTED_AA_MULTIMAP` switches to the native nested associative-array form
+- default path uses native nested associative-array form
+- defining `COLLECTION_NESTED_AA_WORKAROUND` switches to a bucket-handle wrapper around each value-set (auto-set by `collection_pkg.sv` when `XILINX_SIMULATOR` is defined)
 - both paths are intended to preserve identical public semantics
 
 - `insert`
@@ -289,8 +289,8 @@ Implementation note:
 - `sprint` / `print`
   - empty and populated multimap formatting
 - macro variants
-  - default XSim-compatible path
-  - nested-AA path accepted by `slang`
+  - default native nested-AA path
+  - XSim-compatible bucket-handle path activated by `COLLECTION_NESTED_AA_WORKAROUND`
 
 ### `multimap_array_util`
 
@@ -371,6 +371,6 @@ All testbenches must:
 - `multimap_util::*_into()` fully overwrites `result`
 - `multimap_util::merge_*` unions value-sets on shared keys
 - `multimap_util::intersect_*` and `diff_*` drop keys whose result value-set is empty
-- `multimap_util` supports two in-file implementations selected by `COLLECTION_USE_NESTED_AA_MULTIMAP`
+- `multimap_util` supports two in-file implementations selected by `COLLECTION_NESTED_AA_WORKAROUND`
 - `multimap_array_util::*_into()` fully overwrites each result bank
 - `multimap_array_util::*_with()` applies the corresponding `multimap_util` operation bank by bank

@@ -30,13 +30,13 @@ module multimap_array_util_tb;
         values[13] = 1'b1;
         int_mmap_array_util_t::add_values(banks, 0, 1, values);
 
-`ifdef COLLECTION_USE_NESTED_AA_MULTIMAP
-        subset[1][10] = 1'b1;
-        subset[1][11] = 1'b1;
-`else
+`ifdef COLLECTION_NESTED_AA_WORKAROUND
         subset[1] = new();
         subset[1].values[10] = 1'b1;
         subset[1].values[11] = 1'b1;
+`else
+        subset[1][10] = 1'b1;
+        subset[1][11] = 1'b1;
 `endif
         keys[1] = 1'b1;
         int_mmap_array_util_t::insert(rhs_array, 0, 1, 10);

@@ -9,8 +9,9 @@
 //
 // 设计约定：
 // 1. `multimap_array_t[bank]` 逻辑上是一个普通 multimap，每个 bank 彼此独立。
-// 2. 默认实现为 XSim 兼容的 bank-wrapper 版本；如果定义
-//    `COLLECTION_USE_DIRECT_MULTIMAP_ARRAY`，则切换到直接数组版本。
+// 2. 默认使用直接数组 `multimap_t multimap_array_t[N_BANKS]`。
+//    当编译器定义了 `COLLECTION_NESTED_AA_WORKAROUND` 时，
+//    切换到 bank-bucket-handle 兼容版本（在 `collection_pkg.sv` 中根据编译器自动设置）。
 // 3. 整体运算按 bank 逐项执行，对应 bank 调用 `multimap_util` 的同名操作。
 // 4. `*_into()` 语义与 `multimap_util` 保持一致：逐 bank 完整覆写 `result[bank]`。
 // 5. 打印采用简单逐行输出：每个 `<bank, key, values>` 占一行。
@@ -23,14 +24,14 @@ class multimap_array_util #(int unsigned N_BANKS = 4,
     typedef mmap_elem_util_t::val_set_t val_set_t;
     typedef mmap_elem_util_t::key_set_t key_set_t;
 
-`ifdef COLLECTION_USE_DIRECT_MULTIMAP_ARRAY
-    typedef multimap_t multimap_array_t[N_BANKS];
-`else
+`ifdef COLLECTION_NESTED_AA_WORKAROUND
     class bank_bucket_t;
         multimap_t mmap;
     endclass
 
     typedef bank_bucket_t multimap_array_t[N_BANKS];
+`else
+    typedef multimap_t multimap_array_t[N_BANKS];
 `endif
 
     typedef key_set_t key_set_array_t[N_BANKS];
@@ -39,7 +40,7 @@ class multimap_array_util #(int unsigned N_BANKS = 4,
     static function multimap_t get_bank_mmap(const ref multimap_array_t mmap_array, input int unsigned bank);
         multimap_t result;
 
-`ifndef COLLECTION_USE_DIRECT_MULTIMAP_ARRAY
+`ifdef COLLECTION_NESTED_AA_WORKAROUND
         if (mmap_array[bank] != null)
             result = mmap_array[bank].mmap;
 `else
@@ -51,7 +52,7 @@ class multimap_array_util #(int unsigned N_BANKS = 4,
 
     // 用新的 multimap 结果覆写指定 bank；空 multimap 直接清空该 bank。
     static function void set_bank_mmap(ref multimap_array_t mmap_array, input int unsigned bank, const ref multimap_t mmap);
-`ifndef COLLECTION_USE_DIRECT_MULTIMAP_ARRAY
+`ifdef COLLECTION_NESTED_AA_WORKAROUND
         if (mmap.size() == 0)
             mmap_array[bank] = null;
         else begin

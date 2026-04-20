@@ -36,10 +36,10 @@ Run all files listed in `filelist/lib.f` and `filelist/testbench.f`:
 scripts/check_collection_core.sh
 ```
 
-Check the native nested-associative-array `multimap_util` variant:
+Check the nested-AA workaround variant (bucket-handle wrappers):
 
 ```bash
-slang -D COLLECTION_USE_NESTED_AA_MULTIMAP -f scripts/slang.f
+slang -D COLLECTION_NESTED_AA_WORKAROUND -f scripts/slang.f
 ```
 
 ## Running XSim
@@ -88,8 +88,11 @@ Failures stop immediately using `$fatal(1)` after printing a descriptive message
 - Prefer one focused testbench per utility or container type
 - Keep checks local and explicit; avoid hidden scoreboard logic for small library tests
 - `multimap_util.svh` currently has two implementations in the same file:
-  - default XSim-compatible bucket path
-  - macro-enabled nested-AA path for tools that support nested associative arrays better
+  - default native nested-AA path (for slang, VCS, etc.)
+  - bucket-handle path activated by `COLLECTION_NESTED_AA_WORKAROUND` (auto-set by `collection_pkg.sv` when `XILINX_SIMULATOR` is defined)
+- `multimap_array_util.svh` similarly has two implementations:
+  - default direct `multimap_t[N_BANKS]` path
+  - bank-bucket-handle path activated by `COLLECTION_NESTED_AA_WORKAROUND`
 - When adding APIs, update both:
   - `docs/test-plan.md`
   - `filelist/testbench.f`

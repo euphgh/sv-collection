@@ -1,3 +1,7 @@
+`ifdef XILINX_SIMULATOR
+    `define COLLECTION_NESTED_AA_WORKAROUND
+`endif
+
 package collection;
     `include "set_util.svh"
     `include "set_array_util.svh"

@@ -9,8 +9,9 @@
 //
 // 设计约定：
 // 1. `multimap_t[key]` 逻辑上是一个去重后的 value 集合，因此天然不保存重复 value。
-//    默认实现为 XSim 兼容的 bucket-handle 版本。
-//    如果定义 `COLLECTION_USE_NESTED_AA_MULTIMAP`，则切换到原生 nested-AA 版本。
+//    默认使用原生 nested-AA（`val_set_t multimap_t[KEY_T]`）。
+//    当编译器定义了 `COLLECTION_NESTED_AA_WORKAROUND` 时，
+//    切换到 bucket-handle 兼容版本（在 `collection_pkg.sv` 中根据编译器自动设置）。
 // 2. `merge` 对相同 key 做 value-set 的并集。
 // 3. `intersect` / `diff` 对相同 key 下的 value-set 做集合运算；若结果为空集合，则删除该 key。
 // 4. `*_into()` 会完整覆写 `result`，与 `aa_util` 的风格保持一致。
@@ -23,14 +24,14 @@ class multimap_util #(type KEY_T = logic [7:0],
     typedef set_util#(VAL_T) val_set_util;
     typedef val_set_util::set_t val_set_t;
 
-`ifdef COLLECTION_USE_NESTED_AA_MULTIMAP
-    typedef val_set_t multimap_t[KEY_T];
-`else
+`ifdef COLLECTION_NESTED_AA_WORKAROUND
     class bucket_t;
         val_set_t values;
     endclass
 
     typedef bucket_t multimap_t[KEY_T];
+`else
+    typedef val_set_t multimap_t[KEY_T];
 `endif
 
     // 返回格式化字符串，展示每个 key 对应的 value 集合。
@@ -44,10 +45,10 @@ class multimap_util #(type KEY_T = logic [7:0],
 
         s = $sformatf("%s = '{  // size=%0d", name, key_count);
         foreach (mmap[key]) begin
-`ifdef COLLECTION_USE_NESTED_AA_MULTIMAP
-            s = {s, $sformatf("\n  [%p]: %p", key, mmap[key])};
-`else
+`ifdef COLLECTION_NESTED_AA_WORKAROUND
             s = {s, $sformatf("\n  [%p]: %p", key, mmap[key].values)};
+`else
+            s = {s, $sformatf("\n  [%p]: %p", key, mmap[key])};
 `endif
             cnt++;
             if (cnt >= 100) begin
@@ -69,7 +70,7 @@ class multimap_util #(type KEY_T = logic [7:0],
 
     // 插入一个 `<key, value>` 对；底层使用 set，因此重复 value 会被自动去重。
     static function void insert(ref multimap_t mmap, input KEY_T key, input VAL_T value);
-`ifndef COLLECTION_USE_NESTED_AA_MULTIMAP
+`ifdef COLLECTION_NESTED_AA_WORKAROUND
         if (!mmap.exists(key) || (mmap[key] == null))
             mmap[key] = new();
         val_set_util::insert(mmap[key].values, value);
@@ -80,7 +81,7 @@ class multimap_util #(type KEY_T = logic [7:0],
 
     // 将一组 value 合并到指定 key 上。
     static function void add_values(ref multimap_t mmap, input KEY_T key, const ref val_set_t values);
-`ifndef COLLECTION_USE_NESTED_AA_MULTIMAP
+`ifdef COLLECTION_NESTED_AA_WORKAROUND
         if (!mmap.exists(key) || (mmap[key] == null))
             mmap[key] = new();
         val_set_util::union_with(mmap[key].values, values);
@@ -94,7 +95,7 @@ class multimap_util #(type KEY_T = logic [7:0],
         int unsigned count = 0;
 
         foreach (mmap[key]) begin
-`ifndef COLLECTION_USE_NESTED_AA_MULTIMAP
+`ifdef COLLECTION_NESTED_AA_WORKAROUND
             if (mmap[key] != null)
                 count += $unsigned(mmap[key].values.size());
 `else
@@ -107,7 +108,7 @@ class multimap_util #(type KEY_T = logic [7:0],
 
     // 返回指定 key 下的 value 数量；不存在的 key 视为空集合。
     static function int unsigned num_values_at_key(const ref multimap_t mmap, input KEY_T key);
-`ifndef COLLECTION_USE_NESTED_AA_MULTIMAP
+`ifdef COLLECTION_NESTED_AA_WORKAROUND
         if (!mmap.exists(key) || (mmap[key] == null))
             return 0;
         return $unsigned(mmap[key].values.size());
@@ -120,7 +121,7 @@ class multimap_util #(type KEY_T = logic [7:0],
 
     // 判断是否存在指定 key。
     static function bit has_key(const ref multimap_t mmap, input KEY_T key);
-`ifndef COLLECTION_USE_NESTED_AA_MULTIMAP
+`ifdef COLLECTION_NESTED_AA_WORKAROUND
         return mmap.exists(key) && (mmap[key] != null);
 `else
         return mmap.exists(key);
@@ -129,7 +130,7 @@ class multimap_util #(type KEY_T = logic [7:0],
 
     // 判断 `<key, value>` 对是否存在。
     static function bit contains_value(const ref multimap_t mmap, input KEY_T key, input VAL_T value);
-`ifndef COLLECTION_USE_NESTED_AA_MULTIMAP
+`ifdef COLLECTION_NESTED_AA_WORKAROUND
         if (!mmap.exists(key) || (mmap[key] == null))
             return 0;
         return val_set_util::contains_key(mmap[key].values, value);
@@ -143,7 +144,7 @@ class multimap_util #(type KEY_T = logic [7:0],
     // 判断 rhs 是否为 lhs 的子 multimap：每个 key 和对应的 value-set 都必须被包含。
     static function bit contains(const ref multimap_t lhs, const ref multimap_t rhs);
         foreach (rhs[key]) begin
-`ifndef COLLECTION_USE_NESTED_AA_MULTIMAP
+`ifdef COLLECTION_NESTED_AA_WORKAROUND
             if (!lhs.exists(key) || (lhs[key] == null) || (rhs[key] == null))
                 return 0;
             if (!val_set_util::contains_set(lhs[key].values, rhs[key].values))
@@ -165,7 +166,7 @@ class multimap_util #(type KEY_T = logic [7:0],
             return 0;
 
         foreach (lhs[key]) begin
-`ifndef COLLECTION_USE_NESTED_AA_MULTIMAP
+`ifdef COLLECTION_NESTED_AA_WORKAROUND
             if (!rhs.exists(key) || (lhs[key] == null) || (rhs[key] == null))
                 return 0;
             if (!val_set_util::equals(lhs[key].values, rhs[key].values))
@@ -185,7 +186,7 @@ class multimap_util #(type KEY_T = logic [7:0],
     static function void merge_into(const ref multimap_t lhs, const ref multimap_t rhs, ref multimap_t result);
         multimap_t tmp;
 
-`ifndef COLLECTION_USE_NESTED_AA_MULTIMAP
+`ifdef COLLECTION_NESTED_AA_WORKAROUND
         foreach (lhs[key]) begin
             tmp[key] = new();
             tmp[key].values = lhs[key].values;
@@ -217,7 +218,7 @@ class multimap_util #(type KEY_T = logic [7:0],
 
     // 原地 merge，把 rhs 的所有 value-set 合并回 lhs。
     static function void merge_with(ref multimap_t lhs, const ref multimap_t rhs);
-`ifndef COLLECTION_USE_NESTED_AA_MULTIMAP
+`ifdef COLLECTION_NESTED_AA_WORKAROUND
         foreach (rhs[key])
             begin
                 if (!lhs.exists(key) || (lhs[key] == null))
@@ -236,7 +237,7 @@ class multimap_util #(type KEY_T = logic [7:0],
         val_set_t values;
 
         foreach (lhs[key]) begin
-`ifndef COLLECTION_USE_NESTED_AA_MULTIMAP
+`ifdef COLLECTION_NESTED_AA_WORKAROUND
             if (lhs[key] == null)
                 continue;
             if (!rhs.exists(key))
@@ -285,7 +286,7 @@ class multimap_util #(type KEY_T = logic [7:0],
         val_set_t values;
 
         foreach (lhs[key]) begin
-`ifndef COLLECTION_USE_NESTED_AA_MULTIMAP
+`ifdef COLLECTION_NESTED_AA_WORKAROUND
             if (lhs[key] == null)
                 continue;
             if (!rhs.exists(key)) begin
@@ -350,7 +351,7 @@ class multimap_util #(type KEY_T = logic [7:0],
     static function val_set_t get_values(const ref multimap_t mmap, input KEY_T key);
         val_set_t values;
 
-`ifndef COLLECTION_USE_NESTED_AA_MULTIMAP
+`ifdef COLLECTION_NESTED_AA_WORKAROUND
         if (mmap.exists(key) && (mmap[key] != null))
             values = mmap[key].values;
 `else

@@ -13,8 +13,7 @@ mkdir -p "$BUILD_DIR"
 
 pushd "$BUILD_DIR" >/dev/null
 
-xvlog -sv "$LIB_DIR/collection_pkgs.sv" -i "$LIB_DIR"
-xvlog -sv -i "$LIB_DIR" "$ROOT"/tests/*.sv
+xvlog -sv "$LIB_DIR/collection_pkg.sv" -i "$LIB_DIR" "$ROOT"/tests/*.sv
 xelab "work.$TOP" -debug typical -s "$SNAPSHOT"
 
 if [[ "$GUI_FLAG" == "--gui" ]]; then
