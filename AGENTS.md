@@ -41,6 +41,50 @@ Use `README` and files under `docs/` as reader guidance documents.
   that are already captured in source comments.
 - Keep detailed contracts in code so the code remains the primary reference.
 
+## Feature Development Workflow
+
+For a new feature, use the following workflow unless the user explicitly asks
+for a different order.
+
+1. Documentation first.
+   - Add or update a `docs/` page that explains the feature at a high level.
+   - Record what the feature does, where its implementation code will live, and
+     where its tests will live.
+   - Keep this document high level; do not put detailed API contracts here.
+
+2. Define the code shape before implementing behavior.
+   - Create the class, typedefs, function declarations, and file structure.
+   - Write detailed source-code doc comments that define each API contract.
+   - Use comments in empty bodies to capture implementation notes, delegated
+     behavior, normalization rules, and open questions.
+   - If anything is unclear, such as API semantics, parameter meaning,
+     normalization expectations, or implementation approach, stop and ask the
+     user for confirmation before inventing behavior.
+   - Run syntax lint during this stage to keep the definition code valid.
+
+3. Write tests from the contract.
+   - Add or update focused tests that follow the documented API contract.
+   - Cover the intended behavior, edge cases, normalization rules, and boundary
+     scenarios described in the code comments.
+   - At the top of each test file, include a test plan comment that explains
+     the scope and planned coverage.
+   - Treat the test code as part of the documentation surface: code is doc.
+   - Run syntax lint on the tests during this stage.
+
+4. Implement behavior last.
+   - Implement the code according to the documented contracts and
+     implementation notes.
+   - Use an iterative validation loop: lint -> compile -> test.
+   - If implementation raises new semantic questions or exposes ambiguity in
+     the contract, stop and confirm the behavior with the user before
+     continuing.
+
+5. Close the loop in documentation.
+   - After the implementation is complete, update the relevant `docs/` page.
+   - Record the final high-level design, where the feature lives, and any
+     important development decisions or resolved issues that help future
+     readers navigate the code.
+
 ## Comment Style
 
 Use Doxygen-style documentation comments for public APIs and important helper
