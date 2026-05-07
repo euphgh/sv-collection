@@ -30,10 +30,14 @@ class set_util #(type KEY_T = real, bit UNIQUE_ELEM = 1);
 
     static function bit contains(const ref set_t lhs, const ref set_t rhs);
         foreach (rhs[i])
-            if (count(set, key) == 0)
+            if (count(lhs, rhs[i]) == 0)
                 return 0;
         return 1;
     endfunction : contains
+
+    static function bit _has(const ref set_t set, input KEY_T key);
+        return count(set, key) != 0;
+    endfunction : _has
 
     /**
      * insert key into set, return 1 if insertion is successful, otherwise return 0;
