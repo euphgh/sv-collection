@@ -12,8 +12,8 @@
 // 2. 整体集合运算按索引逐项执行，对应槽位调用 `set_util` 的同名操作。
 // 3. `*_into()` 语义与 `set_util` 保持一致：逐项把结果插入到 `result[index]`，
 //    不会清空该槽位原有内容。
-class set_array_util #(type DATA_T = logic [31:0], int SIZE = 32);
-    typedef set_util#(DATA_T) set_elem_util_t;
+class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
+    typedef set_util#(DATA_T, UNIQUE_ELEM) set_elem_util_t;
     typedef set_elem_util_t::set_t set_t;
     typedef set_t set_array_t[SIZE];
 
@@ -28,23 +28,23 @@ class set_array_util #(type DATA_T = logic [31:0], int SIZE = 32);
     endfunction : delete
 
     // 判断指定槽位是否包含某个 key。
-    static function bit contains_key(const ref set_array_t set_aa, input int index, input DATA_T key);
-        return set_elem_util_t::contains_key(set_aa[index], key);
-    endfunction : contains_key
+    static function bit count(const ref set_array_t set_aa, input int index, input DATA_T key);
+        return set_elem_util_t::count(set_aa[index], key);
+    endfunction : count
 
     // 判断指定槽位是否包含一个子集。
-    static function bit contains_set(const ref set_array_t set_aa, input int index, const ref set_t subset);
-        return set_elem_util_t::contains_set(set_aa[index], subset);
-    endfunction : contains_set
+    static function bit contains_at(const ref set_array_t set_aa, input int index, const ref set_t subset);
+        return set_elem_util_t::contains(set_aa[index], subset);
+    endfunction : contains_at
 
-    // 判断 lhs[index] 是否同时包含 rhs 数组中每个槽位的集合。
-    static function bit contains_set_array(const ref set_array_t set_aa, input int index, const ref set_array_t rhs);
+    // 判断 lhs 是否包含 rhs 数组中对应每个槽位的集合。
+    static function bit contains(const ref set_array_t set_aa, const ref set_array_t rhs);
         foreach (rhs[i]) begin
-            if (!set_elem_util_t::contains_set(set_aa[index], rhs[i]))
+            if (!set_elem_util_t::contains_set(set_aa[i], rhs[i]))
                 return 0;
         end
         return 1;
-    endfunction : contains_set_array
+    endfunction : contains
 
     // 判断两个 set-array 是否逐槽位完全相等。
     static function bit equals(const ref set_array_t a, const ref set_array_t b);

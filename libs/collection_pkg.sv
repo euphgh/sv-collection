@@ -7,6 +7,6 @@ package collection;
     `include "set_array_util.svh"
     `include "aa_util.svh"
     `include "aa_array_util.svh"
-    `include "multimap_util.svh"
-    `include "multimap_array_util.svh"
+    `include "aa_of_q_util.svh"
+    `include "aa_of_q_array_util.svh"
 endpackage

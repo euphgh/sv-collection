@@ -14,137 +14,83 @@
 // 4. `*_into()` 会完整覆写 `result`。
 // 5. 只读入参统一使用 `const ref`，避免大关联数组的隐式拷贝。
 //
-// 提供的接口：
-//   sprint / print
-//   equals / equals_verbose
-//   contains / contains_keys / has_key / has_value
-//   merge_into / get_merge / merge_with
-//   intersect_into / get_intersect / intersect_with / get_intersect_merge_with
-//   diff_into / get_diff / diff_with
+// 提供接口：
+// 1. mutate:
+//    insert：仅插入一个元素
+//    merge: merge_into / get_merge / merge_with
+//    intersect: intersect_into / get_intersect / intersect_with
+//    diff: diff_into / get_diff / diff_with
+// 2. observe:
+//   equals / contains / contains_key_set / has_value
 //   get_keys / get_values
-class aa_util #(type KEY_T = logic [7:0], type VAL_T = logic [7:0]);
+// 
+// 参数要求：
+// 1. KEY_T 必须是可hash的二态数据类型
+// 2. VAL_T 是可以使用==比较的二态数据类型
+class aa_util #(type KEY_T = int, type VAL_T = real);
     typedef VAL_T aa_t[KEY_T];
-
     typedef set_util#(KEY_T) key_set_util;
     typedef set_util#(VAL_T) val_set_util;
     typedef key_set_util::set_t key_set_t;
     typedef val_set_util::set_t val_set_t;
 
-    // 返回格式化字符串，默认最多展开前 100 项，避免日志失控。
-    static function string sprint(const ref aa_t aa, input string name = "aa");
-        string s;
-        int cnt = 0;
-
-        if (aa.size() == 0)
-            return $sformatf("%s = '{}  // empty, size=0", name);
-
-        s = $sformatf("%s = '{  // size=%0d", name, aa.size());
-        foreach (aa[k]) begin
-            s = {s, $sformatf("\n  [%p]: %p", k, aa[k])};
-            cnt++;
-            if (cnt >= 100) begin
-                s = {s, $sformatf("\n  ... (%0d more entries)", aa.size() - cnt)};
-                break;
-            end
-        end
-
-        s = {s, "\n}"};
-        return s;
-    endfunction : sprint
-
-    // 直接打印格式化后的关联数组内容。
-    static function void print(const ref aa_t aa, input string name = "aa");
-        $display("%s", sprint(aa, name));
-    endfunction : print
-
-    // 严格比较 key 集和 value，value 使用 `!==` 以保留 X/Z 语义。
     static function bit equals(const ref aa_t a, const ref aa_t b);
-        if (a.size() != b.size())
+        if (a.num() != b.num())
             return 0;
 
         foreach (a[k]) begin
             if (!b.exists(k))
                 return 0;
-            if (a[k] !== b[k])
+            if (a[k] != b[k])
                 return 0;
         end
 
         return 1;
-    endfunction : equals
-
-    // 逐项收集差异信息，便于 testbench 或日志直接打印定位问题。
-    static function bit equals_verbose(
-        const ref aa_t a,
-        const ref aa_t b,
-        input string name_a = "a",
-        input string name_b = "b",
-        output string diff
-    );
-        int mismatch_cnt = 0;
-        string s = "";
-
-        diff = "";
-
-        foreach (a[k]) begin
-            if (!b.exists(k)) begin
-                s = {s, $sformatf("\n  [%p]: only in %s = %p", k, name_a, a[k])};
-                mismatch_cnt++;
-            end
-            else if (a[k] !== b[k]) begin
-                s = {s, $sformatf("\n  [%p]: %s=%p, %s=%p", k, name_a, a[k], name_b, b[k])};
-                mismatch_cnt++;
-            end
-        end
-
-        foreach (b[k]) begin
-            if (!a.exists(k)) begin
-                s = {s, $sformatf("\n  [%p]: only in %s = %p", k, name_b, b[k])};
-                mismatch_cnt++;
-            end
-        end
-
-        if (mismatch_cnt > 0) begin
-            diff = $sformatf("Found %0d difference(s):%s", mismatch_cnt, s);
-            return 0;
-        end
-
-        return 1;
-    endfunction : equals_verbose
+    endfunction
 
     // 判断 b 是否为 a 的子映射，需要同时满足 key 存在且 value 相等。
     static function bit contains(const ref aa_t a, const ref aa_t b);
         foreach (b[k]) begin
             if (!a.exists(k))
                 return 0;
-            if (a[k] !== b[k])
+            if (a[k] != b[k])
                 return 0;
         end
 
         return 1;
     endfunction : contains
 
+    /** 
+     * insert a new <key, value> pair; if key already exists, do nothing and return 0.
+     * return 1 if insertion is successful.
+     * @param a the associative array to insert into
+     * @param key the key to insert
+     * @param value the value to associate with the key
+     * @return bit 1 if insertion is successful, 0 if key already exists
+     */
+    static function bit insert(ref aa_t a, input KEY_T key, input VAL_T value);
+        if (a.exists(key)) begin
+            return 0; // Key already exists
+        end
+        a[key] = value;
+        return 1; // Insertion successful
+    endfunction : insert
+
     // 判断给定 key 集是否全部出现在关联数组中。
-    static function bit contains_keys(const ref aa_t a, const ref key_set_t keys);
+    static function bit contains_key_set(const ref aa_t a, const ref key_set_t keys);
         foreach (keys[key]) begin
             if (!a.exists(key))
                 return 0;
         end
-
         return 1;
-    endfunction : contains_keys
+    endfunction : contains_key_set
 
-    // 判断单个 key 是否存在。
-    static function bit has_key(const ref aa_t a, input KEY_T key);
-        return a.exists(key);
-    endfunction : has_key
-
-    // 遍历所有 value 做严格三值比较，保留 X/Z 语义。
+    // 遍历所有 value，不保留X/Z语义
     static function bit has_value(const ref aa_t a, input VAL_T value);
         foreach (a[k]) begin
-            if (a[k] === value)
+            if (a[k] == value)
                 return 1;
         end
-
         return 0;
     endfunction : has_value
 
@@ -207,15 +153,6 @@ class aa_util #(type KEY_T = logic [7:0], type VAL_T = logic [7:0]);
         foreach (keys_to_delete[i])
             lhs.delete(keys_to_delete[i]);
     endfunction : intersect_with
-
-    // 先记录会被 rhs 覆盖的 lhs 条目，再对 lhs 做原地 merge。
-    static function aa_t get_intersect_merge_with(ref aa_t lhs, const ref aa_t rhs);
-        aa_t overwritten;
-
-        intersect_into(lhs, rhs, overwritten);
-        merge_with(lhs, rhs);
-        return overwritten;
-    endfunction : get_intersect_merge_with
 
     // 差集只保留 a 独有的 key，value 同样来自 a。
     static function void diff_into(const ref aa_t a, const ref aa_t b, ref aa_t result);
