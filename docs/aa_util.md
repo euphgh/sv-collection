@@ -43,6 +43,7 @@ collection helpers, continue with:
 - `libs/aa_array_util.svh`
 - `libs/multimap_util.svh`
 - `libs/aa_of_q_util.svh`
+- `libs/aa_value_adapter_util.svh`
 
 ## Recommended Reading Order
 
