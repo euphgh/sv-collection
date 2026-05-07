@@ -30,18 +30,19 @@
 // 5. merge family
 //    - key-level union
 //    - shared-key value queues delegate to set_util union semantics
-//    - *_into fully overwrites stale result contents
+//    - *_into preserves unrelated result content
+//    - touched keys replace the existing queue in result
 //    - returned / mutated containers remain normalized
 // 6. intersect family
 //    - only shared keys remain candidates
 //    - shared-key value queues delegate to set_util intersect semantics
-//    - keys whose intersected value queue is empty are removed
-//    - *_into fully overwrites stale result contents
+//    - empty per-key intersections leave the existing result key unchanged
+//    - non-empty per-key intersections replace the existing result queue
 // 7. diff family
 //    - lhs-only keys are retained
 //    - shared-key value queues delegate to set_util diff semantics
-//    - keys whose diffed value queue is empty are removed
-//    - *_into fully overwrites stale result contents
+//    - empty per-key differences leave the existing result key unchanged
+//    - non-empty per-key differences replace the existing result queue
 // 8. projections
 //    - get_keys returns all visible keys
 //    - get_values flattens all visible values and delegates duplicate handling
@@ -82,9 +83,10 @@ module aa_of_q_util_tb;
     endfunction
 
     task automatic check_aa_equals(const ref int_aa_of_q_t actual,
-                                   const ref int_aa_of_q_t expected,
-                                   input string msg);
-        check_true(aa_equals(actual, expected), msg);
+                                    const ref int_aa_of_q_t expected,
+                                    input string msg);
+        check_true(aa_equals(actual, expected), msg,
+                   $sformatf("actual=%p expected=%p", actual, expected));
     endtask
 
     task automatic test_clean();
@@ -131,11 +133,14 @@ module aa_of_q_util_tb;
         different_values[4] = {40};
 
         check_true(int_aa_of_q_util_t::equals(lhs, same_values_different_order),
-                   "equals should ignore queue order for UNIQUE_ELEM == 1");
+                   "equals should ignore queue order for UNIQUE_ELEM == 1",
+                   $sformatf("lhs=%p rhs=%p", lhs, same_values_different_order));
         check_true(!int_aa_of_q_util_t::equals(lhs, different_key_domain),
-                   "equals should fail when visible key domains differ");
+                   "equals should fail when visible key domains differ",
+                   $sformatf("lhs=%p rhs=%p", lhs, different_key_domain));
         check_true(!int_aa_of_q_util_t::equals(lhs, different_values),
-                   "equals should fail when a shared key has different values");
+                   "equals should fail when a shared key has different values",
+                   $sformatf("lhs=%p rhs=%p", lhs, different_values));
     endtask
 
     task automatic test_contains_and_lookup_helpers();
@@ -158,21 +163,28 @@ module aa_of_q_util_tb;
         missing_keys = {1, 5};
 
         check_true(int_aa_of_q_util_t::contains(lhs, rhs_subset),
-                   "contains should accept per-key subsets");
+                   "contains should accept per-key subsets",
+                   $sformatf("lhs=%p rhs=%p", lhs, rhs_subset));
         check_true(!int_aa_of_q_util_t::contains(lhs, rhs_missing_key),
-                   "contains should reject missing rhs keys");
+                   "contains should reject missing rhs keys",
+                   $sformatf("lhs=%p rhs=%p", lhs, rhs_missing_key));
         check_true(!int_aa_of_q_util_t::contains(lhs, rhs_missing_value),
-                   "contains should reject missing rhs values");
+                   "contains should reject missing rhs values",
+                   $sformatf("lhs=%p rhs=%p", lhs, rhs_missing_value));
 
         check_true(int_aa_of_q_util_t::contains_key_set(lhs, required_keys),
-                   "contains_key_set should accept visible key subsets");
+                   "contains_key_set should accept visible key subsets",
+                   $sformatf("a=%p keys=%p", lhs, required_keys));
         check_true(!int_aa_of_q_util_t::contains_key_set(lhs, missing_keys),
-                   "contains_key_set should reject absent visible keys");
+                   "contains_key_set should reject absent visible keys",
+                   $sformatf("a=%p keys=%p", lhs, missing_keys));
 
         check_true(int_aa_of_q_util_t::has_value(lhs, 20),
-                   "has_value should find values under any visible key");
+                   "has_value should find values under any visible key",
+                   $sformatf("a=%p value=%0d", lhs, 20));
         check_true(!int_aa_of_q_util_t::has_value(lhs, 99),
-                   "has_value should reject absent values");
+                   "has_value should reject absent values",
+                   $sformatf("a=%p value=%0d", lhs, 99));
     endtask
 
     task automatic test_insert();
@@ -184,7 +196,8 @@ module aa_of_q_util_tb;
 
         inserted = int_aa_of_q_util_t::insert(a, 4, 40);
         check_true(inserted,
-                   "insert should create a new visible key when key is absent");
+                   "insert should create a new visible key when key is absent",
+                   $sformatf("a=%p key=%0d value=%0d", a, 4, 40));
         expected[1] = {10, 20};
         expected[4] = {40};
         check_aa_equals(a, expected,
@@ -192,14 +205,16 @@ module aa_of_q_util_tb;
 
         inserted = int_aa_of_q_util_t::insert(a, 1, 30);
         check_true(inserted,
-                   "insert should add a new value to an existing key");
+                   "insert should add a new value to an existing key",
+                   $sformatf("a=%p key=%0d value=%0d", a, 1, 30));
         expected[1] = {10, 20, 30};
         check_aa_equals(a, expected,
                         "insert should append a new distinct value under an existing key");
 
         inserted = int_aa_of_q_util_t::insert(a, 1, 20);
         check_true(!inserted,
-                   "insert should reject duplicates when UNIQUE_ELEM == 1");
+                   "insert should reject duplicates when UNIQUE_ELEM == 1",
+                   $sformatf("a=%p key=%0d value=%0d", a, 1, 20));
         check_aa_equals(a, expected,
                         "insert should not change the container after duplicate insertion");
     endtask
@@ -208,7 +223,8 @@ module aa_of_q_util_tb;
         int_aa_of_q_t lhs;
         int_aa_of_q_t rhs;
         int_aa_of_q_t result;
-        int_aa_of_q_t expected;
+        int_aa_of_q_t expected_into;
+        int_aa_of_q_t expected_pure;
         int_aa_of_q_t merged;
 
         lhs[1] = {10};
@@ -217,22 +233,28 @@ module aa_of_q_util_tb;
         rhs[3] = {30};
         result[99] = {999};
 
-        expected[1] = {10};
-        expected[2] = {20, 21, 22};
-        expected[3] = {30};
+        expected_into[1] = {10};
+        expected_into[2] = {20, 21, 22};
+        expected_into[3] = {30};
+        expected_into[99] = {999};
+
+        expected_pure[1] = {10};
+        expected_pure[2] = {20, 21, 22};
+        expected_pure[3] = {30};
 
         int_aa_of_q_util_t::merge_into(lhs, rhs, result);
-        check_aa_equals(result, expected,
-                        "merge_into should overwrite result with key union and per-key union");
-        check_true(!result.exists(99),
-                   "merge_into should discard stale result keys");
+        check_aa_equals(result, expected_into,
+                        "merge_into should update touched keys and preserve unrelated result content");
+        check_true(result[2].size() == 3,
+                   "merge_into should replace the touched key with the merged queue",
+                   $sformatf("result[2]=%p result=%p", result[2], result));
 
         merged = int_aa_of_q_util_t::get_merge(lhs, rhs);
-        check_aa_equals(merged, expected,
+        check_aa_equals(merged, expected_pure,
                         "get_merge should return the merged container");
 
         int_aa_of_q_util_t::merge_with(lhs, rhs);
-        check_aa_equals(lhs, expected,
+        check_aa_equals(lhs, expected_pure,
                         "merge_with should update lhs to the merged container");
     endtask
 
@@ -240,7 +262,8 @@ module aa_of_q_util_tb;
         int_aa_of_q_t lhs;
         int_aa_of_q_t rhs;
         int_aa_of_q_t result;
-        int_aa_of_q_t expected;
+        int_aa_of_q_t expected_into;
+        int_aa_of_q_t expected_pure;
         int_aa_of_q_t intersected;
 
         lhs[1] = {10};
@@ -249,24 +272,33 @@ module aa_of_q_util_tb;
         rhs[2] = {21, 22};
         rhs[3] = {31};
         rhs[4] = {40};
+        result[1] = {111};
+        result[2] = {222};
+        result[3] = {333};
         result[99] = {999};
 
-        expected[2] = {21};
+        expected_into[1] = {111};
+        expected_into[2] = {21};
+        expected_into[3] = {333};
+        expected_into[99] = {999};
+
+        expected_pure[2] = {21};
 
         int_aa_of_q_util_t::intersect_into(lhs, rhs, result);
-        check_aa_equals(result, expected,
-                        "intersect_into should keep only shared keys with non-empty per-key intersection");
-        check_true(!result.exists(3),
-                   "intersect_into should drop shared keys whose intersected queue is empty");
-        check_true(!result.exists(99),
-                   "intersect_into should discard stale result keys");
+        check_aa_equals(result, expected_into,
+                        "intersect_into should update only non-empty per-key intersections");
+        check_true(result[1].size() == 1 && result[1][0] == 111 &&
+                   result[2].size() == 1 && result[2][0] == 21 &&
+                   result[3].size() == 1 && result[3][0] == 333,
+                   "intersect_into should preserve unrelated result content and update only shared non-empty keys",
+                   $sformatf("result=%p lhs=%p rhs=%p", result, lhs, rhs));
 
         intersected = int_aa_of_q_util_t::get_intersect(lhs, rhs);
-        check_aa_equals(intersected, expected,
+        check_aa_equals(intersected, expected_pure,
                         "get_intersect should return the normalized intersection");
 
         int_aa_of_q_util_t::intersect_with(lhs, rhs);
-        check_aa_equals(lhs, expected,
+        check_aa_equals(lhs, expected_pure,
                         "intersect_with should update lhs to the normalized intersection");
     endtask
 
@@ -274,7 +306,8 @@ module aa_of_q_util_tb;
         int_aa_of_q_t lhs;
         int_aa_of_q_t rhs;
         int_aa_of_q_t result;
-        int_aa_of_q_t expected;
+        int_aa_of_q_t expected_into;
+        int_aa_of_q_t expected_pure;
         int_aa_of_q_t diffed;
 
         lhs[1] = {10};
@@ -283,25 +316,32 @@ module aa_of_q_util_tb;
         rhs[2] = {21};
         rhs[3] = {30};
         rhs[4] = {40};
+        result[1] = {111};
+        result[2] = {222};
+        result[3] = {333};
         result[99] = {999};
 
-        expected[1] = {10};
-        expected[2] = {20};
+        expected_into[1] = {10};
+        expected_into[2] = {20};
+        expected_into[3] = {333};
+        expected_into[99] = {999};
+
+        expected_pure[1] = {10};
+        expected_pure[2] = {20};
 
         int_aa_of_q_util_t::diff_into(lhs, rhs, result);
-        check_aa_equals(result, expected,
-                        "diff_into should keep lhs-only keys and per-key lhs minus rhs values");
-        check_true(!result.exists(3),
-                   "diff_into should drop keys whose diffed queue is empty");
-        check_true(!result.exists(99),
-                   "diff_into should discard stale result keys");
+        check_aa_equals(result, expected_into,
+                        "diff_into should update non-empty differences and preserve untouched content");
+        check_true(result[3].size() == 1 && result[3][0] == 333,
+                   "diff_into should leave empty per-key differences unchanged in result",
+                   $sformatf("result=%p lhs=%p rhs=%p", result, lhs, rhs));
 
         diffed = int_aa_of_q_util_t::get_diff(lhs, rhs);
-        check_aa_equals(diffed, expected,
+        check_aa_equals(diffed, expected_pure,
                         "get_diff should return the normalized difference");
 
         int_aa_of_q_util_t::diff_with(lhs, rhs);
-        check_aa_equals(lhs, expected,
+        check_aa_equals(lhs, expected_pure,
                         "diff_with should update lhs to the normalized difference");
     endtask
 
@@ -322,9 +362,11 @@ module aa_of_q_util_tb;
         values = int_aa_of_q_util_t::get_values(a);
 
         check_true(queue_equals(keys, expected_keys),
-                   "get_keys should return all visible keys");
+                   "get_keys should return all visible keys",
+                   $sformatf("keys=%p expected=%p", keys, expected_keys));
         check_true(queue_equals(values, expected_values),
-                   "get_values should flatten visible values and delegate duplicate handling to set_util");
+                   "get_values should flatten visible values and delegate duplicate handling to set_util",
+                   $sformatf("values=%p expected=%p", values, expected_values));
     endtask
 
     task automatic test_boundary_cases();
@@ -338,16 +380,25 @@ module aa_of_q_util_tb;
         result[99] = {999};
 
         int_aa_of_q_util_t::merge_into(empty_lhs, populated, result);
-        check_aa_equals(result, populated,
-                        "merge_into should handle an empty lhs operand");
+        check_true(result[99].size() == 1 && result[99][0] == 999,
+                   "merge_into should preserve unrelated result content when lhs is empty",
+                   $sformatf("result=%p populated=%p", result, populated));
+        check_true(result[7].size() == 1 && result[7][0] == 70,
+                   "merge_into should update the touched rhs key when lhs is empty",
+                   $sformatf("result=%p populated=%p", result, populated));
 
         int_aa_of_q_util_t::intersect_into(populated, empty_rhs, result);
-        check_aa_equals(result, expected,
-                        "intersect_into should return empty when rhs is empty");
+        check_true(result[99].size() == 1 && result[99][0] == 999,
+                   "intersect_into should preserve unrelated result content when rhs is empty",
+                   $sformatf("result=%p populated=%p", result, populated));
+        check_true(result[7].size() == 1 && result[7][0] == 70,
+                   "intersect_into should keep the preexisting touched key when the intersection is empty",
+                   $sformatf("result=%p populated=%p empty_rhs=%p", result, populated, empty_rhs));
 
         int_aa_of_q_util_t::diff_into(empty_lhs, populated, result);
-        check_aa_equals(result, expected,
-                        "diff_into should return empty when lhs is empty");
+        check_true(result[99].size() == 1 && result[99][0] == 999,
+                   "diff_into should preserve unrelated result content when lhs is empty",
+                   $sformatf("result=%p populated=%p", result, populated));
     endtask
 
     initial begin

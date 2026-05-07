@@ -419,13 +419,20 @@ function void aa_of_q_util::merge_into(
 );
     aa_of_q_t tmp;
 
-    foreach (lhs[key])
-        tmp[key] = lhs[key];
+    foreach (lhs[key]) begin
+        val_q_t queue;
 
-    foreach (rhs[key])
-        val_set_util::union_with(tmp[key], rhs[key]);
+        queue = lhs[key];
+        if (rhs.exists(key))
+            val_set_util::union_with(queue, rhs[key]);
 
-    result = tmp;
+        result[key] = queue;
+    end
+
+    foreach (rhs[key]) begin
+        if (!lhs.exists(key))
+            result[key] = rhs[key];
+    end
 endfunction : merge_into
 
 function void aa_of_q_util::merge_with(
@@ -434,6 +441,7 @@ function void aa_of_q_util::merge_with(
 );
     aa_of_q_t tmp;
 
+    tmp.delete();
     merge_into(lhs, rhs, tmp);
     lhs = tmp;
 endfunction : merge_with
@@ -443,7 +451,6 @@ function void aa_of_q_util::intersect_into(
     const ref aa_of_q_t rhs,
     ref aa_of_q_t result
 );
-    aa_of_q_t tmp;
     val_q_t values;
 
     foreach (lhs[key]) begin
@@ -452,10 +459,8 @@ function void aa_of_q_util::intersect_into(
 
         values = val_set_util::get_intersect(lhs[key], rhs[key]);
         if (values.size() != 0)
-            tmp[key] = values;
+            result[key] = values;
     end
-
-    result = tmp;
 endfunction : intersect_into
 
 function void aa_of_q_util::intersect_with(
@@ -464,6 +469,7 @@ function void aa_of_q_util::intersect_with(
 );
     aa_of_q_t tmp;
 
+    tmp.delete();
     intersect_into(lhs, rhs, tmp);
     lhs = tmp;
 endfunction : intersect_with
@@ -473,21 +479,18 @@ function void aa_of_q_util::diff_into(
     const ref aa_of_q_t rhs,
     ref aa_of_q_t result
 );
-    aa_of_q_t tmp;
     val_q_t values;
 
     foreach (lhs[key]) begin
         if (!rhs.exists(key)) begin
-            tmp[key] = lhs[key];
+            result[key] = lhs[key];
             continue;
         end
 
         values = val_set_util::get_diff(lhs[key], rhs[key]);
         if (values.size() != 0)
-            tmp[key] = values;
+            result[key] = values;
     end
-
-    result = tmp;
 endfunction : diff_into
 
 function void aa_of_q_util::diff_with(
@@ -496,6 +499,7 @@ function void aa_of_q_util::diff_with(
 );
     aa_of_q_t tmp;
 
+    tmp.delete();
     diff_into(lhs, rhs, tmp);
     lhs = tmp;
 endfunction : diff_with

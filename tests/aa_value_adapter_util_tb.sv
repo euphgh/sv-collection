@@ -15,13 +15,14 @@
 // 2. merge family
 //    - inserts scalar values into queue view
 //    - preserves existing queue values
-//    - overwrites stale result content for *_into
+//    - preserves unrelated result content for *_into
+//    - replaces the touched key's queue when the result is non-empty
 // 3. intersect family
 //    - keeps only shared keys whose scalar values are present in the queue
-//    - drops keys whose value is absent in the queue
+//    - leaves existing result content unchanged when the intersection is empty
 // 4. diff family
 //    - removes one matching occurrence per shared key
-//    - drops keys whose queues become empty
+//    - leaves existing result content unchanged when the difference is empty
 // 5. projections
 //    - to_aa extracts singleton queues into scalar values
 //    - to_aa_of_q lifts scalar values into singleton queues
@@ -72,7 +73,8 @@ module aa_value_adapter_util_tb;
     task automatic check_aa_of_q_equals(const ref int_aa_of_q_t actual,
                                         const ref int_aa_of_q_t expected,
                                         input string msg);
-        check_true(aa_of_q_equals(actual, expected), msg);
+        check_true(aa_of_q_equals(actual, expected), msg,
+                   $sformatf("actual=%p expected=%p", actual, expected));
     endtask
 
     task automatic test_contains();
@@ -85,18 +87,21 @@ module aa_value_adapter_util_tb;
         rhs[2] = 30;
 
         check_true(int_value_adapter_util_t::contains(lhs, rhs),
-                   "contains should accept scalar values present in queue view");
+                   "contains should accept scalar values present in queue view",
+                   $sformatf("lhs=%p rhs=%p", lhs, rhs));
 
         rhs[2] = 99;
         check_true(!int_value_adapter_util_t::contains(lhs, rhs),
-                   "contains should reject absent values");
+                   "contains should reject absent values",
+                   $sformatf("lhs=%p rhs=%p", lhs, rhs));
     endtask
 
     task automatic test_merge_family();
         int_aa_of_q_t lhs;
         int_aa_t rhs;
         int_aa_of_q_t result;
-        int_aa_of_q_t expected;
+        int_aa_of_q_t expected_into;
+        int_aa_of_q_t expected_pure;
 
         lhs[1] = {10, 20};
         lhs[2] = {30};
@@ -104,28 +109,37 @@ module aa_value_adapter_util_tb;
         rhs[3] = 50;
         result[99] = {999};
 
-        expected[1] = {10, 20};
-        expected[2] = {30, 40};
-        expected[3] = {50};
+        expected_into[1] = {10, 20};
+        expected_into[2] = {30, 40};
+        expected_into[3] = {50};
+        expected_into[99] = {999};
+
+        expected_pure[1] = {10, 20};
+        expected_pure[2] = {30, 40};
+        expected_pure[3] = {50};
 
         int_value_adapter_util_t::merge_into(lhs, rhs, result);
-        check_aa_of_q_equals(result, expected,
-                             "merge_into should overwrite result with merged queue view");
+        check_aa_of_q_equals(result, expected_into,
+                              "merge_into should preserve unrelated result content and update touched keys");
+        check_true(result[2].size() == 2 && result[2][0] == 30 && result[2][1] == 40,
+                   "merge_into should replace the touched key with the merged queue",
+                   $sformatf("result=%p lhs=%p rhs=%p", result, lhs, rhs));
 
         result = int_value_adapter_util_t::get_merge(lhs, rhs);
-        check_aa_of_q_equals(result, expected,
-                             "get_merge should return the merged queue view");
+        check_aa_of_q_equals(result, expected_pure,
+                              "get_merge should return the merged queue view");
 
         int_value_adapter_util_t::merge_with(lhs, rhs);
-        check_aa_of_q_equals(lhs, expected,
-                             "merge_with should update lhs in place");
+        check_aa_of_q_equals(lhs, expected_pure,
+                              "merge_with should update lhs in place");
     endtask
 
     task automatic test_intersect_family();
         int_aa_of_q_t lhs;
         int_aa_t rhs;
         int_aa_of_q_t result;
-        int_aa_of_q_t expected;
+        int_aa_of_q_t expected_into;
+        int_aa_of_q_t expected_pure;
 
         lhs[1] = {10, 20};
         lhs[2] = {30};
@@ -133,28 +147,37 @@ module aa_value_adapter_util_tb;
         rhs[1] = 20;
         rhs[2] = 99;
         rhs[4] = 40;
+        result[1] = {111};
+        result[2] = {222};
+        result[3] = {333};
         result[99] = {999};
 
-        expected[1] = {20};
+        expected_into[1] = {20};
+        expected_into[2] = {222};
+        expected_into[3] = {333};
+        expected_into[99] = {999};
+
+        expected_pure[1] = {20};
 
         int_value_adapter_util_t::intersect_into(lhs, rhs, result);
-        check_aa_of_q_equals(result, expected,
-                             "intersect_into should keep only shared keys with present values");
+        check_aa_of_q_equals(result, expected_into,
+                              "intersect_into should update only non-empty intersections and preserve unrelated content");
 
         result = int_value_adapter_util_t::get_intersect(lhs, rhs);
-        check_aa_of_q_equals(result, expected,
-                             "get_intersect should return the intersected queue view");
+        check_aa_of_q_equals(result, expected_pure,
+                              "get_intersect should return the intersected queue view");
 
         int_value_adapter_util_t::intersect_with(lhs, rhs);
-        check_aa_of_q_equals(lhs, expected,
-                             "intersect_with should update lhs in place");
+        check_aa_of_q_equals(lhs, expected_pure,
+                              "intersect_with should update lhs in place");
     endtask
 
     task automatic test_diff_family();
         int_aa_of_q_t lhs;
         int_aa_t rhs;
         int_aa_of_q_t result;
-        int_aa_of_q_t expected;
+        int_aa_of_q_t expected_into;
+        int_aa_of_q_t expected_pure;
 
         lhs[1] = {10, 20};
         lhs[2] = {30};
@@ -162,22 +185,30 @@ module aa_value_adapter_util_tb;
         rhs[1] = 20;
         rhs[2] = 30;
         rhs[4] = 99;
+        result[1] = {111};
+        result[2] = {222};
+        result[3] = {333};
         result[99] = {999};
 
-        expected[1] = {10};
-        expected[3] = {40};
+        expected_into[1] = {10};
+        expected_into[2] = {222};
+        expected_into[3] = {40};
+        expected_into[99] = {999};
+
+        expected_pure[1] = {10};
+        expected_pure[3] = {40};
 
         int_value_adapter_util_t::diff_into(lhs, rhs, result);
-        check_aa_of_q_equals(result, expected,
-                             "diff_into should remove matching scalar values from queues");
+        check_aa_of_q_equals(result, expected_into,
+                              "diff_into should update only non-empty differences and preserve unrelated content");
 
         result = int_value_adapter_util_t::get_diff(lhs, rhs);
-        check_aa_of_q_equals(result, expected,
-                             "get_diff should return the differenced queue view");
+        check_aa_of_q_equals(result, expected_pure,
+                              "get_diff should return the differenced queue view");
 
         int_value_adapter_util_t::diff_with(lhs, rhs);
-        check_aa_of_q_equals(lhs, expected,
-                             "diff_with should update lhs in place");
+        check_aa_of_q_equals(lhs, expected_pure,
+                              "diff_with should update lhs in place");
     endtask
 
     task automatic test_projection_helpers();
@@ -196,7 +227,8 @@ module aa_value_adapter_util_tb;
 
         aa = int_value_adapter_util_t::to_aa(aa_of_q);
         check_true(aa_equals(aa, expected_aa),
-                   "to_aa should extract singleton queue values");
+                   "to_aa should extract singleton queue values",
+                   $sformatf("aa=%p expected=%p", aa, expected_aa));
 
         lifted = int_value_adapter_util_t::to_aa_of_q(aa);
         check_aa_of_q_equals(lifted, aa_of_q,

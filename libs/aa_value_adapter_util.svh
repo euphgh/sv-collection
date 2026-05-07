@@ -75,23 +75,20 @@ class aa_value_adapter_util #(type KEY_T = int, type VAL_T = real, bit UNIQUE_EL
     static function void merge_into(const ref aa_of_q_t lhs,
                                     const ref aa_t rhs,
                                     ref aa_of_q_t result);
-        aa_of_q_t tmp;
         val_q_t queue;
 
         foreach (lhs[key])
-            tmp[key] = lhs[key];
+            result[key] = lhs[key];
 
         foreach (rhs[key]) begin
-            if (tmp.exists(key))
-                queue = tmp[key];
+            if (result.exists(key))
+                queue = result[key];
             else
-                queue = {};
+                queue = lhs.exists(key) ? lhs[key] : {};
 
             void'(val_set_util::insert(queue, rhs[key]));
-            tmp[key] = queue;
+            result[key] = queue;
         end
-
-        result = tmp;
     endfunction : merge_into
 
     /**
@@ -107,6 +104,7 @@ class aa_value_adapter_util #(type KEY_T = int, type VAL_T = real, bit UNIQUE_EL
                                        const ref aa_t rhs);
         aa_of_q_t result;
 
+        result.delete();
         merge_into(lhs, rhs, result);
         return result;
     endfunction : get_merge
@@ -123,6 +121,7 @@ class aa_value_adapter_util #(type KEY_T = int, type VAL_T = real, bit UNIQUE_EL
     static function void merge_with(ref aa_of_q_t lhs, const ref aa_t rhs);
         aa_of_q_t tmp;
 
+        tmp.delete();
         merge_into(lhs, rhs, tmp);
         lhs = tmp;
     endfunction : merge_with
@@ -145,18 +144,14 @@ class aa_value_adapter_util #(type KEY_T = int, type VAL_T = real, bit UNIQUE_EL
     static function void intersect_into(const ref aa_of_q_t lhs,
                                         const ref aa_t rhs,
                                         ref aa_of_q_t result);
-        aa_of_q_t tmp;
-
         foreach (lhs[key]) begin
             if (!rhs.exists(key))
                 continue;
             if (val_set_util::count(lhs[key], rhs[key]) == 0)
                 continue;
 
-            tmp[key] = {rhs[key]};
+            result[key] = {rhs[key]};
         end
-
-        result = tmp;
     endfunction : intersect_into
 
     /**
@@ -172,6 +167,7 @@ class aa_value_adapter_util #(type KEY_T = int, type VAL_T = real, bit UNIQUE_EL
                                             const ref aa_t rhs);
         aa_of_q_t result;
 
+        result.delete();
         intersect_into(lhs, rhs, result);
         return result;
     endfunction : get_intersect
@@ -188,6 +184,7 @@ class aa_value_adapter_util #(type KEY_T = int, type VAL_T = real, bit UNIQUE_EL
     static function void intersect_with(ref aa_of_q_t lhs, const ref aa_t rhs);
         aa_of_q_t tmp;
 
+        tmp.delete();
         intersect_into(lhs, rhs, tmp);
         lhs = tmp;
     endfunction : intersect_with
@@ -209,7 +206,6 @@ class aa_value_adapter_util #(type KEY_T = int, type VAL_T = real, bit UNIQUE_EL
     static function void diff_into(const ref aa_of_q_t lhs,
                                    const ref aa_t rhs,
                                    ref aa_of_q_t result);
-        aa_of_q_t tmp;
         val_q_t queue;
 
         foreach (lhs[key]) begin
@@ -219,10 +215,8 @@ class aa_value_adapter_util #(type KEY_T = int, type VAL_T = real, bit UNIQUE_EL
                 val_set_util::delete(queue, rhs[key]);
 
             if (queue.size() != 0)
-                tmp[key] = queue;
+                result[key] = queue;
         end
-
-        result = tmp;
     endfunction : diff_into
 
     /**
@@ -238,6 +232,7 @@ class aa_value_adapter_util #(type KEY_T = int, type VAL_T = real, bit UNIQUE_EL
                                        const ref aa_t rhs);
         aa_of_q_t result;
 
+        result.delete();
         diff_into(lhs, rhs, result);
         return result;
     endfunction : get_diff
@@ -254,6 +249,7 @@ class aa_value_adapter_util #(type KEY_T = int, type VAL_T = real, bit UNIQUE_EL
     static function void diff_with(ref aa_of_q_t lhs, const ref aa_t rhs);
         aa_of_q_t tmp;
 
+        tmp.delete();
         diff_into(lhs, rhs, tmp);
         lhs = tmp;
     endfunction : diff_with
