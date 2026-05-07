@@ -82,6 +82,8 @@ for a different order.
    - Implement the code according to the documented contracts and
      implementation notes.
    - Use an iterative validation loop: lint -> compile -> test.
+   - Do not claim a test or change is correct unless the code has been compiled
+     and run and the runtime result has been observed.
    - If implementation raises new semantic questions or exposes ambiguity in
      the contract, stop and confirm the behavior with the user before
      continuing.
@@ -91,6 +93,11 @@ for a different order.
    - Record the final high-level design, where the feature lives, and any
      important development decisions or resolved issues that help future
      readers navigate the code.
+
+## Process Requests
+
+When a user asks for a reusable workflow, methodology, or rule in conversation,
+follow it and ask whether they want that guidance added to `AGENTS.md` as well.
 
 ## Comment Style
 
