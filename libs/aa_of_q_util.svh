@@ -160,10 +160,15 @@ class aa_of_q_util #(
      *         result.
      * @pre `lhs` and `rhs` do not contain keys mapped to empty queues.
      */
-    extern static function aa_of_q_t get_merge(
+    static function aa_of_q_t get_merge(
         const ref aa_of_q_t lhs,
         const ref aa_of_q_t rhs
     );
+        aa_of_q_t result;
+
+        merge_into(lhs, rhs, result);
+        return result;
+    endfunction : get_merge
 
     /**
      * @brief Merges `rhs` into `lhs` in place.
@@ -207,10 +212,15 @@ class aa_of_q_util #(
      *         intersection result.
      * @pre `lhs` and `rhs` do not contain keys mapped to empty queues.
      */
-    extern static function aa_of_q_t get_intersect(
+    static function aa_of_q_t get_intersect(
         const ref aa_of_q_t lhs,
         const ref aa_of_q_t rhs
     );
+        aa_of_q_t result;
+
+        intersect_into(lhs, rhs, result);
+        return result;
+    endfunction : get_intersect
 
     /**
      * @brief Replaces `lhs` with the intersection of `lhs` and `rhs`.
@@ -254,10 +264,15 @@ class aa_of_q_util #(
      *         difference result.
      * @pre `lhs` and `rhs` do not contain keys mapped to empty queues.
      */
-    extern static function aa_of_q_t get_diff(
+    static function aa_of_q_t get_diff(
         const ref aa_of_q_t lhs,
         const ref aa_of_q_t rhs
     );
+        aa_of_q_t result;
+
+        diff_into(lhs, rhs, result);
+        return result;
+    endfunction : get_diff
 
     /**
      * @brief Replaces `lhs` with the difference `lhs - rhs`.
@@ -280,7 +295,14 @@ class aa_of_q_util #(
      * @return a key set containing every visible key in `a`.
      * @pre `a` does not contain keys mapped to empty queues.
      */
-    extern static function key_set_t get_keys(const ref aa_of_q_t a);
+    static function key_set_t get_keys(const ref aa_of_q_t a);
+        key_set_t result;
+
+        foreach (a[key])
+            void'(key_set_util::insert(result, key));
+
+        return result;
+    endfunction : get_keys
 
     /**
      * @brief Returns the flattened set of visible values.
@@ -292,7 +314,14 @@ class aa_of_q_util #(
      * @return a value set containing the visible values of `a`.
      * @pre `a` does not contain keys mapped to empty queues.
      */
-    extern static function val_set_t get_values(const ref aa_of_q_t a);
+    static function val_set_t get_values(const ref aa_of_q_t a);
+        val_set_t result;
+
+        foreach (a[key])
+            val_set_util::union_with(result, a[key]);
+
+        return result;
+    endfunction : get_values
 
     /**
      * @brief Normalizes a multimap in place.
@@ -311,25 +340,31 @@ function bit aa_of_q_util::equals(
     const ref aa_of_q_t lhs,
     const ref aa_of_q_t rhs
 );
-    // Implementation notes:
-    // 1. Assume lhs and rhs are already normalized as required by the API.
-    // 2. Compare visible key domains first.
-    // 3. For each shared key, delegate queue comparison to val_set_util.
-    // 4. The exact queue comparison semantics, including UNIQUE_ELEM == 0,
-    //    follow set_util#(VAL_T, UNIQUE_ELEM).
-    return 0;
+    if (lhs.num() != rhs.num())
+        return 0;
+
+    foreach (lhs[key]) begin
+        if (!rhs.exists(key))
+            return 0;
+        if (!val_set_util::equals(lhs[key], rhs[key]))
+            return 0;
+    end
+
+    return 1;
 endfunction : equals
 
 function bit aa_of_q_util::contains(
     const ref aa_of_q_t lhs,
     const ref aa_of_q_t rhs
 );
-    // Implementation notes:
-    // 1. Assume lhs and rhs are already normalized as required by the API.
-    // 2. Iterate only visible keys in rhs.
-    // 3. Check that each rhs key is visible in lhs.
-    // 4. Delegate per-key value containment to val_set_util.
-    return 0;
+    foreach (rhs[key]) begin
+        if (!lhs.exists(key))
+            return 0;
+        if (!val_set_util::contains(lhs[key], rhs[key]))
+            return 0;
+    end
+
+    return 1;
 endfunction : contains
 
 function bit aa_of_q_util::insert(
@@ -337,35 +372,39 @@ function bit aa_of_q_util::insert(
     input KEY_T key,
     input VAL_T value
 );
-    // Implementation notes:
-    // 1. Assume a is already normalized as required by the API.
-    // 2. Handle the case where key does not yet exist in the associative array.
-    // 3. Avoid relying on implicit associative-array creation through read-only
-    //    access to a missing key.
-    // 4. Delegate actual queue insertion to val_set_util::insert.
-    // 5. Preserve normalized form after insertion.
-    return 0;
+    val_q_t queue;
+
+    if (a.exists(key))
+        queue = a[key];
+
+    if (!val_set_util::insert(queue, value))
+        return 0;
+
+    a[key] = queue;
+    return 1;
 endfunction : insert
 
 function bit aa_of_q_util::contains_key_set(
     const ref aa_of_q_t a,
     const ref key_set_t keys
 );
-    // Implementation notes:
-    // 1. Assume a is already normalized as required by the API.
-    // 2. Iterate over the input key set.
-    // 3. Check whether each key exists in the visible key domain of a.
-    return 0;
+    foreach (keys[i]) begin
+        if (!a.exists(keys[i]))
+            return 0;
+    end
+
+    return 1;
 endfunction : contains_key_set
 
 function bit aa_of_q_util::has_value(
     const ref aa_of_q_t a,
     input VAL_T value
 );
-    // Implementation notes:
-    // 1. Assume a is already normalized as required by the API.
-    // 2. Iterate over each visible key.
-    // 3. Delegate membership testing within each queue to val_set_util.
+    foreach (a[key]) begin
+        if (val_set_util::count(a[key], value) != 0)
+            return 1;
+    end
+
     return 0;
 endfunction : has_value
 
@@ -374,36 +413,25 @@ function void aa_of_q_util::merge_into(
     const ref aa_of_q_t rhs,
     ref aa_of_q_t result
 );
-    // Implementation notes:
-    // 1. Assume lhs and rhs are already normalized as required by the API.
-    // 2. Build result from scratch so *_into fully overwrites the destination.
-    // 3. Retain keys that appear in either operand.
-    // 4. For a shared key, delegate queue merge behavior to val_set_util.
-    // 5. Normalize result before returning it to the caller.
+    aa_of_q_t tmp;
+
+    foreach (lhs[key])
+        tmp[key] = lhs[key];
+
+    foreach (rhs[key])
+        val_set_util::union_with(tmp[key], rhs[key]);
+
+    result = tmp;
 endfunction : merge_into
-
-function aa_of_q_util::aa_of_q_t aa_of_q_util::get_merge(
-    const ref aa_of_q_t lhs,
-    const ref aa_of_q_t rhs
-);
-    aa_of_q_t result;
-
-    // Implementation notes:
-    // 1. Delegate to merge_into to keep one source of truth.
-    // 2. Keep allocation and normalization policy consistent with merge_with.
-    return result;
-endfunction : get_merge
 
 function void aa_of_q_util::merge_with(
     ref aa_of_q_t lhs,
     const ref aa_of_q_t rhs
 );
-    // Implementation notes:
-    // 1. Assume lhs and rhs are already normalized as required by the API.
-    // 2. Prefer implementing this API in terms of merge_into/get_merge.
-    // 3. Avoid mutating lhs while iterating over it if that creates simulator-
-    //    dependent behavior.
-    // 4. Preserve normalized representation after the update.
+    aa_of_q_t tmp;
+
+    merge_into(lhs, rhs, tmp);
+    lhs = tmp;
 endfunction : merge_with
 
 function void aa_of_q_util::intersect_into(
@@ -411,37 +439,29 @@ function void aa_of_q_util::intersect_into(
     const ref aa_of_q_t rhs,
     ref aa_of_q_t result
 );
-    // Implementation notes:
-    // 1. Assume lhs and rhs are already normalized as required by the API.
-    // 2. Only shared keys are candidates for the result.
-    // 3. For each shared key, compute val_set_util::get_intersect(lhs[key],
-    //    rhs[key]).
-    // 4. Drop keys whose resulting queue is empty.
-    // 5. Normalize result before exposing it.
+    aa_of_q_t tmp;
+    val_q_t values;
+
+    foreach (lhs[key]) begin
+        if (!rhs.exists(key))
+            continue;
+
+        values = val_set_util::get_intersect(lhs[key], rhs[key]);
+        if (values.size() != 0)
+            tmp[key] = values;
+    end
+
+    result = tmp;
 endfunction : intersect_into
-
-function aa_of_q_util::aa_of_q_t aa_of_q_util::get_intersect(
-    const ref aa_of_q_t lhs,
-    const ref aa_of_q_t rhs
-);
-    aa_of_q_t result;
-
-    // Implementation notes:
-    // 1. Delegate to intersect_into.
-    // 2. Keep empty-key cleanup policy identical to intersect_with.
-    return result;
-endfunction : get_intersect
 
 function void aa_of_q_util::intersect_with(
     ref aa_of_q_t lhs,
     const ref aa_of_q_t rhs
 );
-    // Implementation notes:
-    // 1. Assume lhs and rhs are already normalized as required by the API.
-    // 2. Prefer a two-phase strategy: compute then replace, or collect changes
-    //    before mutating lhs.
-    // 3. Ensure keys whose post-intersection queue is empty are not retained.
-    // 4. Preserve consistency with intersect_into/get_intersect.
+    aa_of_q_t tmp;
+
+    intersect_into(lhs, rhs, tmp);
+    lhs = tmp;
 endfunction : intersect_with
 
 function void aa_of_q_util::diff_into(
@@ -449,66 +469,43 @@ function void aa_of_q_util::diff_into(
     const ref aa_of_q_t rhs,
     ref aa_of_q_t result
 );
-    // Implementation notes:
-    // 1. Assume lhs and rhs are already normalized as required by the API.
-    // 2. Retain lhs-only keys as-is.
-    // 3. For shared keys, compute val_set_util::get_diff(lhs[key], rhs[key]).
-    // 4. Drop keys whose resulting queue is empty.
-    // 5. Normalize result before exposing it.
+    aa_of_q_t tmp;
+    val_q_t values;
+
+    foreach (lhs[key]) begin
+        if (!rhs.exists(key)) begin
+            tmp[key] = lhs[key];
+            continue;
+        end
+
+        values = val_set_util::get_diff(lhs[key], rhs[key]);
+        if (values.size() != 0)
+            tmp[key] = values;
+    end
+
+    result = tmp;
 endfunction : diff_into
-
-function aa_of_q_util::aa_of_q_t aa_of_q_util::get_diff(
-    const ref aa_of_q_t lhs,
-    const ref aa_of_q_t rhs
-);
-    aa_of_q_t result;
-
-    // Implementation notes:
-    // 1. Delegate to diff_into.
-    // 2. Keep normalization policy identical to diff_with.
-    return result;
-endfunction : get_diff
 
 function void aa_of_q_util::diff_with(
     ref aa_of_q_t lhs,
     const ref aa_of_q_t rhs
 );
-    // Implementation notes:
-    // 1. Assume lhs and rhs are already normalized as required by the API.
-    // 2. Prefer a two-phase update strategy to avoid mutating lhs while it is
-    //    being traversed.
-    // 3. Remove keys whose post-difference queue becomes empty.
-    // 4. Preserve consistency with diff_into/get_diff.
+    aa_of_q_t tmp;
+
+    diff_into(lhs, rhs, tmp);
+    lhs = tmp;
 endfunction : diff_with
 
-function aa_of_q_util::key_set_t aa_of_q_util::get_keys(const ref aa_of_q_t a);
-    key_set_t result;
-
-    // Implementation notes:
-    // 1. Assume a is already normalized as required by the API.
-    // 2. Iterate over the associative-array keys.
-    // 3. Delegate key-set insertion to key_set_util.
-    return result;
-endfunction : get_keys
-
-function aa_of_q_util::val_set_t aa_of_q_util::get_values(const ref aa_of_q_t a);
-    val_set_t result;
-
-    // Implementation notes:
-    // 1. Assume a is already normalized as required by the API.
-    // 2. Traverse every visible key.
-    // 3. Flatten values from each queue.
-    // 4. Delegate accumulation and resulting semantics to val_set_util.
-    return result;
-endfunction : get_values
-
 function void aa_of_q_util::clean(ref aa_of_q_t a);
-    // Implementation notes:
-    // 1. Scan for keys whose associated queue is empty.
-    // 2. Avoid deleting keys while iterating over the associative array if that
-    //    creates simulator-dependent behavior.
-    // 3. Use a two-phase collect-then-delete strategy if needed.
-    // 4. Ensure the resulting container satisfies the normalized invariant.
+    KEY_T keys_to_delete[$];
+
+    foreach (a[key]) begin
+        if (a[key].size() == 0)
+            keys_to_delete.push_back(key);
+    end
+
+    foreach (keys_to_delete[i])
+        a.delete(keys_to_delete[i]);
 endfunction : clean
 
 `endif

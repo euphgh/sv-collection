@@ -23,6 +23,12 @@ This feature covers:
 - helper APIs for observation, mutation, normalization, and collection-style
   operations
 
+Current high-level status:
+
+- `clean()` canonicalizes containers by removing empty-queue keys
+- `*_into()` APIs overwrite the destination with normalized results
+- value-queue behavior continues to delegate to `set_util`
+
 ## Where To Read The Code
 
 Start here:
@@ -35,6 +41,8 @@ Then read these dependencies:
   value-queue behavior and delegated set semantics
 - `libs/aa_util.svh`
   map-style structure and naming conventions that `aa_of_q_util` follows
+- `libs/aa_of_q_2_aa_util.svh`
+  interoperability layer for projecting between `aa_of_q_t` and `aa_t`
 
 Then read the focused testbench:
 
@@ -49,6 +57,7 @@ For someone trying to understand this feature:
 3. Read the class-external function bodies and their implementation notes.
 4. Read `tests/aa_of_q_util_tb.sv` to see the intended behavior and edge cases.
 5. Read `libs/set_util.svh` if you need the delegated value semantics.
+6. Read `libs/aa_of_q_2_aa_util.svh` if you need the scalar-map bridge.
 
 ## How This File Fits In The Repository
 
