@@ -21,6 +21,7 @@ This feature covers:
 - elementwise union, intersection, and difference
 - per-slot delegation to `set_util`
 - normalized set behavior inside each slot
+- array-level print helpers for debugging each slot as one line
 
 Current high-level status:
 
@@ -30,10 +31,13 @@ Current high-level status:
   cross-slot merging occurs
 - `*_into()` follows `set_util`'s append-into-result behavior per slot and does
   not clear pre-existing content in `result[i]`
+- `set_array_util` intentionally exposes a subset of `set_util`, not a slot-
+  local wrapper over the full queue API
+- print helpers are array-oriented and render one array element per line
 
 ## API Review
 
-The intended API surface is intentionally small.
+The intended API surface is intentionally small and array-oriented.
 
 Keep:
 
@@ -43,20 +47,30 @@ Keep:
 - `union_into`, `get_union`, `union_with`
 - `intersect_into`, `get_intersect`, `intersect_with`
 - `diff_into`, `get_diff`, `diff_with`
+- `print` / `sprint` helpers that format one array element per output line
 
 Remove or do not add:
 
-- slot-local CRUD wrappers such as `insert`, `delete`, and `count`
+- slot-local CRUD wrappers such as `insert`, `delete`, `count`, and
+  `unique_into`
 - slot-local containment wrappers such as `contains_at`
-- debug-format helpers such as `sprint` and `print`
 
 Why:
 
-- slot-local CRUD is already expressible with native array indexing plus
-  `set_util`
-- debug printing can be done directly by callers when needed
-- the class should stay focused on array-level collection semantics, not become
-  a convenience wrapper for every slot operation
+- slot-local CRUD would turn this class into a thin per-slot forwarding layer
+  rather than an array-level collection helper
+- callers can still use native array indexing plus `set_util` when they need
+  to manipulate a specific slot directly
+- array-level printing is useful for debugging whole containers, while
+  slot-local debug wrappers would add little value
+
+## Print Format
+
+The intended print format is row-based.
+
+- each output line corresponds to one `set_array_t` element
+- each line prints the slot index and the set stored in that slot
+- the format is meant for debugging and inspection, not for round-tripping
 
 ## Where To Read The Code
 

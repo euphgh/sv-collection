@@ -17,6 +17,11 @@
  * `*_into()` has append-into-result semantics per slot. It does not clear
  * existing content in `result[i]`.
  *
+ * This class intentionally exposes an array-level subset of `set_util`, not a
+ * slot-local wrapper over the full queue API.
+ *
+ * The `sprint` / `print` helpers format one array element per output line.
+ *
  * @tparam DATA_T element type stored in each slot.
  * @tparam SIZE fixed number of slots in the array.
  * @tparam UNIQUE_ELEM whether each slot behaves as a unique-element set.
@@ -36,7 +41,8 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
      * @return `1` if every corresponding slot is equal; otherwise returns `0`.
      * @pre `UNIQUE_ELEM == 1`.
      */
-    static function bit equals(const ref set_array_t lhs, const ref set_array_t rhs);
+    static function bit equals(const ref set_array_t lhs,
+                             const ref set_array_t rhs);
         for (int i = 0; i < SIZE; i++) begin
             if (!set_elem_util_t::equals(lhs[i], rhs[i]))
                 return 0;
@@ -56,7 +62,8 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
      *         of `lhs`; otherwise returns `0`.
      * @pre `UNIQUE_ELEM == 1`.
      */
-    static function bit contains(const ref set_array_t lhs, const ref set_array_t rhs);
+    static function bit contains(const ref set_array_t lhs,
+                                 const ref set_array_t rhs);
         foreach (rhs[i]) begin
             if (!set_elem_util_t::contains(lhs[i], rhs[i]))
                 return 0;
@@ -68,10 +75,15 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
     /**
      * @brief Writes the slot-wise union of `lhs` and `rhs` into `result`.
      *
+     * This API appends the computed union result into each `result[i]`.
+     * Existing content in `result[i]` is preserved.
+     *
      * @param lhs left-hand array operand. Must be normalized per slot.
      * @param rhs right-hand array operand. Must be normalized per slot.
      * @param result output array that receives the full union result.
      * @pre `UNIQUE_ELEM == 1`.
+     * @post `result` retains its original content plus the union result in each
+     *       slot.
      */
     static function void union_into(const ref set_array_t lhs,
                                     const ref set_array_t rhs,
@@ -104,7 +116,8 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
      * @param rhs source array to merge from.
      * @pre `UNIQUE_ELEM == 1`.
      */
-    static function void union_with(ref set_array_t lhs, const ref set_array_t rhs);
+    static function void union_with(ref set_array_t lhs,
+                                    const ref set_array_t rhs);
         for (int i = 0; i < SIZE; i++)
             set_elem_util_t::union_with(lhs[i], rhs[i]);
     endfunction : union_with
@@ -116,6 +129,8 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
      * @param rhs right-hand array operand. Must be normalized per slot.
      * @param result output array that receives the full intersection result.
      * @pre `UNIQUE_ELEM == 1`.
+     * @post `result` retains its original content plus the intersection result
+     *       in each slot.
      */
     static function void intersect_into(const ref set_array_t lhs,
                                         const ref set_array_t rhs,
@@ -148,7 +163,8 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
      * @param rhs source array to intersect with.
      * @pre `UNIQUE_ELEM == 1`.
      */
-    static function void intersect_with(ref set_array_t lhs, const ref set_array_t rhs);
+    static function void intersect_with(ref set_array_t lhs,
+                                        const ref set_array_t rhs);
         for (int i = 0; i < SIZE; i++)
             set_elem_util_t::intersect_with(lhs[i], rhs[i]);
     endfunction : intersect_with
@@ -160,6 +176,8 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
      * @param rhs right-hand array operand. Must be normalized per slot.
      * @param result output array that receives the full difference result.
      * @pre `UNIQUE_ELEM == 1`.
+     * @post `result` retains its original content plus the difference result in
+     *       each slot.
      */
     static function void diff_into(const ref set_array_t lhs,
                                    const ref set_array_t rhs,
@@ -192,10 +210,48 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
      * @param rhs source array to subtract.
      * @pre `UNIQUE_ELEM == 1`.
      */
-    static function void diff_with(ref set_array_t lhs, const ref set_array_t rhs);
+    static function void diff_with(ref set_array_t lhs,
+                                   const ref set_array_t rhs);
         for (int i = 0; i < SIZE; i++)
             set_elem_util_t::diff_with(lhs[i], rhs[i]);
     endfunction : diff_with
+
+    /**
+     * @brief Returns a row-based string representation of the array.
+     *
+     * Each output line corresponds to one array element.
+     *
+     * @param array array to format.
+     * @param name label printed before the rows.
+     * @return a formatted string for debugging.
+     * @pre `UNIQUE_ELEM == 1`.
+     */
+    static function string sprint(const ref set_array_t array,
+                                 input string name = "bank_mem");
+        string s;
+
+        s = {name, "\n"};
+
+        foreach (array[i]) begin
+            s = {s, $sformatf("[%0d]: %p", i, array[i])};
+            if (i != SIZE - 1)
+                s = {s, "\n"};
+        end
+
+        return s;
+    endfunction : sprint
+
+    /**
+     * @brief Prints the row-based string representation of the array.
+     *
+     * @param array array to print.
+     * @param name label printed before the rows.
+     * @pre `UNIQUE_ELEM == 1`.
+     */
+    static function void print(const ref set_array_t array,
+                             input string name = "bank_mem");
+        $display("%s", sprint(array, name));
+    endfunction : print
 endclass
 
 `endif
