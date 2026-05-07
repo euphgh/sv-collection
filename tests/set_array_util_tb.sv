@@ -2,7 +2,6 @@ module set_array_util_tb;
     import collection::*;
 
     typedef set_array_util#(int unsigned, 4) int_set_array_util_t;
-    typedef int_set_array_util_t::set_t int_set_t;
     typedef int_set_array_util_t::set_array_t int_set_array_t;
 
     task automatic check_true(input bit cond, input string msg);
@@ -12,32 +11,31 @@ module set_array_util_tb;
         end
     endtask
 
-    task automatic test_index_helpers();
-        int_set_array_t banks;
-        int_set_t subset;
-        int_set_array_t rhs_sets;
-
-        int_set_array_util_t::insert(banks, 0, 1);
-        int_set_array_util_t::insert(banks, 0, 3);
-        int_set_array_util_t::insert(banks, 1, 10);
-
-        subset[1] = 1'b1;
-        rhs_sets[0][1] = 1'b1;
-        rhs_sets[1][3] = 1'b1;
-
-        check_true(int_set_array_util_t::contains_key(banks, 0, 1), "contains_key should find key in selected bank");
-        check_true(!int_set_array_util_t::contains_key(banks, 0, 2), "contains_key should reject absent key in selected bank");
-        check_true(int_set_array_util_t::contains_set(banks, 0, subset), "contains_set should accept subset for selected bank");
-        check_true(int_set_array_util_t::contains_set_array(banks, 0, rhs_sets), "contains_set_array should require selected bank to contain every rhs bank");
-
-        int_set_array_util_t::delete(banks, 0, 1);
-        check_true(!int_set_array_util_t::contains_key(banks, 0, 1), "delete should remove key from selected bank");
-    endtask
-
-    task automatic test_equals_and_union();
+    task automatic test_equals_and_contains();
         int_set_array_t lhs;
         int_set_array_t rhs;
         int_set_array_t same_as_lhs;
+        int_set_array_t rhs_subset;
+
+        lhs[0][1] = 1'b1;
+        lhs[1][10] = 1'b1;
+        lhs[2][20] = 1'b1;
+
+        rhs[0][2] = 1'b1;
+        rhs[1][10] = 1'b1;
+        same_as_lhs = lhs;
+        rhs_subset[1][10] = 1'b1;
+        rhs_subset[2][20] = 1'b1;
+
+        check_true(int_set_array_util_t::equals(lhs, same_as_lhs), "equals should pass for elementwise identical arrays");
+        check_true(!int_set_array_util_t::equals(lhs, rhs), "equals should fail when any bank differs");
+        check_true(int_set_array_util_t::contains(lhs, rhs_subset), "contains should accept per-slot subsets");
+        check_true(!int_set_array_util_t::contains(lhs, rhs), "contains should reject a differing slot value");
+    endtask
+
+    task automatic test_union_family();
+        int_set_array_t lhs;
+        int_set_array_t rhs;
         int_set_array_t result;
         int_set_array_t exact_union;
 
@@ -46,11 +44,7 @@ module set_array_util_tb;
         rhs[0][2] = 1'b1;
         rhs[1][10] = 1'b1;
         rhs[2][20] = 1'b1;
-        same_as_lhs = lhs;
         result[3][99] = 1'b1;
-
-        check_true(int_set_array_util_t::equals(lhs, same_as_lhs), "equals should pass for elementwise identical arrays");
-        check_true(!int_set_array_util_t::equals(lhs, rhs), "equals should fail when any bank differs");
 
         int_set_array_util_t::union_into(lhs, rhs, result);
         check_true(result[0].exists(1) && result[0].exists(2), "union_into should merge bank 0 keys");
@@ -125,25 +119,10 @@ module set_array_util_tb;
         check_true(lhs[2].size() == 0, "diff_with should clear shared-only bank 2");
     endtask
 
-    task automatic test_print_helpers();
-        int_set_array_t banks;
-        string s;
-
-        s = int_set_array_util_t::sprint(banks, "empty_banks");
-        check_true(s.len() > 0, "sprint should return non-empty text for empty set array");
-
-        banks[0][1] = 1'b1;
-        s = int_set_array_util_t::sprint(banks, "one_bank");
-        check_true(s.len() > 0, "sprint should return non-empty text for populated set array");
-
-        int_set_array_util_t::print(banks, "one_bank");
-    endtask
-
     initial begin
-        test_index_helpers();
-        test_equals_and_union();
+        test_equals_and_contains();
+        test_union_family();
         test_intersect_and_diff();
-        test_print_helpers();
 
         $display("set_array_util_tb: PASS");
         $finish;

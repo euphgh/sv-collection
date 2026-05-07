@@ -43,6 +43,7 @@ collection helpers, continue with:
 
 - `libs/aa_util.svh`
 - `libs/aa_of_q_util.svh`
+- `libs/set_array_util.svh`
 
 ## Recommended Reading Order
 

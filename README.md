@@ -8,6 +8,7 @@ testbenches under `tests/`, and high-level navigation pages under `docs/`.
 ## What Is Here
 
 - `set_util`: queue-based set utilities
+- `set_array_util`: fixed-size array-of-set utilities
 - `aa_util`: associative-array utilities for map-style containers
 - `aa_of_q_util`: associative-array-of-queue utilities for multimap-style
   containers
@@ -20,6 +21,7 @@ For focused VCS runs, use the helper script:
 
 ```bash
 scripts/run_vcs_tb.sh tests/set_util_tb.sv
+scripts/run_vcs_tb.sh tests/set_array_util_tb.sv
 scripts/run_vcs_tb.sh tests/aa_util_tb.sv
 scripts/run_vcs_tb.sh tests/aa_of_q_util_tb.sv
 scripts/run_vcs_tb.sh tests/aa_value_adapter_util_tb.sv
@@ -41,6 +43,7 @@ targeted `slang` commands referenced in `AGENTS.md`.
 ## Docs Index
 
 - `docs/set_util.md`
+- `docs/set_array_util.md`
 - `docs/aa_util.md`
 - `docs/aa_of_q_util.md`
 - `docs/aa_value_adapter_util.md`

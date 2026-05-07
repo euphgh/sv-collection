@@ -47,6 +47,12 @@ Use `README` and files under `docs/` as reader guidance documents.
 For a new feature, use the following workflow unless the user explicitly asks
 for a different order.
 
+- If the user requests only one step or a subset of this workflow, execute only
+  that requested subset. Do not expand it into the full cycle on your own.
+- For code-related work, do not start implementation until the documentation,
+  API contract, and concrete implementation approach have been aligned with the
+  user, and the user has explicitly approved moving on to code.
+
 1. Documentation first.
    - Add or update a `docs/` page that explains the feature at a high level.
    - Record what the feature does, where its implementation code will live, and
