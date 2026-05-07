@@ -146,6 +146,17 @@ or compile check before considering the work complete.
 - For library changes in this repository, `slang -I libs --std 1800-2017
   --compat vcs libs/collection_pkg.sv` is a valid targeted syntax check.
 
+## Build Artifacts
+
+Do not place generated compile or simulation artifacts in git-managed source
+locations.
+
+- Any compile output, generated simulator files, work directories, or logs must
+  live outside the tracked source tree layout used for code and docs.
+- A preferred location for generated output in this repository is `build/`.
+- When using VCS for focused testbench runs, prefer
+  `scripts/run_vcs_tb.sh`, which isolates artifacts under `build/vcs/`.
+
 ## Testbench Isolation
 
 When writing focused testbenches for a specific utility under `libs/`, prefer

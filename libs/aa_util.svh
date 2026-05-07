@@ -3,111 +3,167 @@
 
 `include "set_util.svh"
 
-// aa_util
-// -------
-// 关联数组工具类，面向 map-like 容器场景。
-//
-// 设计约定：
-// 1. 所有集合运算都以 key 为集合元素，value 视为附带 payload。
-// 2. `merge` 语义为 key 并集；当 key 冲突时，`rhs` 覆盖 `lhs`。
-// 3. `intersect` / `diff` 语义都基于 key；返回结果中的 value 一律来自 `lhs`。
-// 4. `*_into()` 会完整覆写 `result`。
-// 5. 只读入参统一使用 `const ref`，避免大关联数组的隐式拷贝。
-//
-// 提供接口：
-// 1. mutate:
-//    insert：仅插入一个元素
-//    merge: merge_into / get_merge / merge_with
-//    intersect: intersect_into / get_intersect / intersect_with
-//    diff: diff_into / get_diff / diff_with
-// 2. observe:
-//   equals / contains / contains_key_set / has_value
-//   get_keys / get_values
-// 
-// 参数要求：
-// 1. KEY_T 必须是可hash的二态数据类型
-// 2. VAL_T 是可以使用==比较的二态数据类型
+/**
+ * @brief Provides map-style utilities for native associative arrays.
+ *
+ * The container model is `VAL_T[KEY_T]`.
+ *
+ * Key-level behavior follows map semantics. Value-level behavior is treated as
+ * payload handling and is not normalized into a set. The `get_values` API
+ * returns a raw queue view that preserves repeated values.
+ *
+ * The `*_into()` family uses append-into-result semantics. These APIs insert
+ * their computed key/value pairs into `result` and do not clear pre-existing
+ * content.
+ *
+ * @tparam KEY_T key type of the associative array. It is expected to be a
+ *               hashable 2-state type.
+ * @tparam VAL_T value type stored for each key. It is expected to be a 2-state
+ *               type comparable with `==`.
+ */
 class aa_util #(type KEY_T = int, type VAL_T = real);
     typedef VAL_T aa_t[KEY_T];
     typedef set_util#(KEY_T) key_set_util;
-    typedef set_util#(VAL_T) val_set_util;
     typedef key_set_util::set_t key_set_t;
-    typedef val_set_util::set_t val_set_t;
+    typedef VAL_T val_q_t[$];
 
-    static function bit equals(const ref aa_t a, const ref aa_t b);
-        if (a.num() != b.num())
+    // ---------------------------------------------------------------------
+    // Public API
+    // ---------------------------------------------------------------------
+
+    /**
+     * @brief Determines whether two associative arrays are semantically equal.
+     *
+     * Equality is defined on both the visible key domain and the value stored
+     * for each visible key.
+     *
+     * @param lhs left-hand associative-array operand.
+     * @param rhs right-hand associative-array operand.
+     * @return `1` if both operands expose the same keys and each key maps to an
+     *         equal value; otherwise returns `0`.
+     */
+    static function bit equals(const ref aa_t lhs, const ref aa_t rhs);
+        if (lhs.num() != rhs.num())
             return 0;
 
-        foreach (a[k]) begin
-            if (!b.exists(k))
+        foreach (lhs[k]) begin
+            if (!rhs.exists(k))
                 return 0;
-            if (a[k] != b[k])
+            if (lhs[k] != rhs[k])
                 return 0;
         end
 
         return 1;
-    endfunction
+    endfunction : equals
 
-    // 判断 b 是否为 a 的子映射，需要同时满足 key 存在且 value 相等。
-    static function bit contains(const ref aa_t a, const ref aa_t b);
-        foreach (b[k]) begin
-            if (!a.exists(k))
+    /**
+     * @brief Determines whether `rhs` is contained in `lhs`.
+     *
+     * Containment is evaluated key by key. A key visible in `rhs` must also be
+     * visible in `lhs`, and the associated value must be equal.
+     *
+     * @param lhs candidate superset associative array.
+     * @param rhs candidate subset associative array.
+     * @return `1` if every visible key and value in `rhs` is contained in
+     *         `lhs`; otherwise returns `0`.
+     */
+    static function bit contains(const ref aa_t lhs, const ref aa_t rhs);
+        foreach (rhs[k]) begin
+            if (!lhs.exists(k))
                 return 0;
-            if (a[k] != b[k])
+            if (lhs[k] != rhs[k])
                 return 0;
         end
 
         return 1;
     endfunction : contains
 
-    /** 
-     * insert a new <key, value> pair; if key already exists, do nothing and return 0.
-     * return 1 if insertion is successful.
-     * @param a the associative array to insert into
-     * @param key the key to insert
-     * @param value the value to associate with the key
-     * @return bit 1 if insertion is successful, 0 if key already exists
+    /**
+     * @brief Inserts a new `<key, value>` pair.
+     *
+     * If `key` already exists, the insertion does nothing and returns `0`.
+     * Otherwise the pair is created and the function returns `1`.
+     *
+     * @param a associative array to update.
+     * @param key key to insert.
+     * @param value value to associate with the key.
+     * @return `1` if insertion succeeds; otherwise returns `0`.
      */
     static function bit insert(ref aa_t a, input KEY_T key, input VAL_T value);
-        if (a.exists(key)) begin
-            return 0; // Key already exists
-        end
+        if (a.exists(key))
+            return 0;
+
         a[key] = value;
-        return 1; // Insertion successful
+        return 1;
     endfunction : insert
 
-    // 判断给定 key 集是否全部出现在关联数组中。
-    static function bit contains_key_set(const ref aa_t a, const ref key_set_t keys);
-        foreach (keys[key]) begin
-            if (!a.exists(key))
+    /**
+     * @brief Determines whether all keys in `keys` are visible in `a`.
+     *
+     * This helper exists for callers that want a direct key-set containment
+     * check without building an intermediate key projection.
+     *
+     * @param a associative array to inspect.
+     * @param keys key set to check.
+     * @return `1` if every key in `keys` exists in `a`; otherwise returns `0`.
+     */
+    static function bit contains_keys(const ref aa_t a,
+                                      const ref key_set_t keys);
+        foreach (keys[i]) begin
+            if (!a.exists(keys[i]))
                 return 0;
         end
-        return 1;
-    endfunction : contains_key_set
 
-    // 遍历所有 value，不保留X/Z语义
+        return 1;
+    endfunction : contains_keys
+
+    /**
+     * @brief Determines whether `value` appears under any visible key.
+     *
+     * @param a associative array to inspect.
+     * @param value value to search for.
+     * @return `1` if at least one visible key contains `value`; otherwise
+     *         returns `0`.
+     */
     static function bit has_value(const ref aa_t a, input VAL_T value);
         foreach (a[k]) begin
             if (a[k] == value)
                 return 1;
         end
+
         return 0;
     endfunction : has_value
 
-    // 先拷贝 lhs，再用 rhs 覆盖同名 key，得到完整 merge 结果。
-    static function void merge_into(const ref aa_t lhs, const ref aa_t rhs, ref aa_t result);
-        aa_t tmp;
-
+    /**
+     * @brief Writes the merge of `lhs` and `rhs` into `result`.
+     *
+     * The key-level contract is key union. For a shared key, `rhs` overrides
+     * `lhs`.
+     *
+     * @param lhs left-hand associative-array operand.
+     * @param rhs right-hand associative-array operand.
+     * @param result destination associative array.
+     * @post `result` keeps its pre-existing keys that are not overwritten by the
+     *       merge result.
+     */
+    static function void merge_into(const ref aa_t lhs,
+                                    const ref aa_t rhs,
+                                    ref aa_t result);
         foreach (lhs[k])
-            tmp[k] = lhs[k];
+            result[k] = lhs[k];
 
         foreach (rhs[k])
-            tmp[k] = rhs[k];
-
-        result = tmp;
+            result[k] = rhs[k];
     endfunction : merge_into
 
-    // 构造一个纯净的新关联数组并返回 merge 结果。
+    /**
+     * @brief Returns the merge of `lhs` and `rhs`.
+     *
+     * @param lhs left-hand associative-array operand.
+     * @param rhs right-hand associative-array operand.
+     * @return a newly constructed associative array that represents the merge
+     *         result.
+     */
     static function aa_t get_merge(const ref aa_t lhs, const ref aa_t rhs);
         aa_t result;
 
@@ -115,25 +171,46 @@ class aa_util #(type KEY_T = int, type VAL_T = real);
         return result;
     endfunction : get_merge
 
-    // 原地 merge，直接把 rhs 中的条目写回 lhs。
+    /**
+     * @brief Merges `rhs` into `lhs` in place.
+     *
+     * @param lhs destination associative array to update in place.
+     * @param rhs source associative array to merge from.
+     */
     static function void merge_with(ref aa_t lhs, const ref aa_t rhs);
         foreach (rhs[k])
             lhs[k] = rhs[k];
     endfunction : merge_with
 
-    // 交集只按 key 判断，但结果 value 保留 lhs 原值。
-    static function void intersect_into(const ref aa_t lhs, const ref aa_t rhs, ref aa_t result);
-        aa_t tmp;
-
+    /**
+     * @brief Writes the intersection of `lhs` and `rhs` into `result`.
+     *
+     * Only keys present in both operands are retained. The result value comes
+     * from `lhs`.
+     *
+     * @param lhs left-hand associative-array operand.
+     * @param rhs right-hand associative-array operand.
+     * @param result destination associative array.
+     * @post `result` keeps pre-existing keys that are not overwritten by the
+     *       intersection result.
+     */
+    static function void intersect_into(const ref aa_t lhs,
+                                        const ref aa_t rhs,
+                                        ref aa_t result);
         foreach (lhs[k]) begin
             if (rhs.exists(k))
-                tmp[k] = lhs[k];
+                result[k] = lhs[k];
         end
-
-        result = tmp;
     endfunction : intersect_into
 
-    // 构造一个纯净的新关联数组并返回交集结果。
+    /**
+     * @brief Returns the intersection of `lhs` and `rhs`.
+     *
+     * @param lhs left-hand associative-array operand.
+     * @param rhs right-hand associative-array operand.
+     * @return a newly constructed associative array that represents the
+     *         intersection result.
+     */
     static function aa_t get_intersect(const ref aa_t lhs, const ref aa_t rhs);
         aa_t result;
 
@@ -141,72 +218,99 @@ class aa_util #(type KEY_T = int, type VAL_T = real);
         return result;
     endfunction : get_intersect
 
-    // 原地交集采用“先收集待删 key，再删除”的方式，避免遍历时修改容器。
+    /**
+     * @brief Replaces `lhs` with the intersection of `lhs` and `rhs`.
+     *
+     * @param lhs destination associative array to update in place.
+     * @param rhs source associative-array operand.
+     */
     static function void intersect_with(ref aa_t lhs, const ref aa_t rhs);
-        KEY_T keys_to_delete[$];
-
-        foreach (lhs[k]) begin
-            if (!rhs.exists(k))
-                keys_to_delete.push_back(k);
-        end
-
-        foreach (keys_to_delete[i])
-            lhs.delete(keys_to_delete[i]);
-    endfunction : intersect_with
-
-    // 差集只保留 a 独有的 key，value 同样来自 a。
-    static function void diff_into(const ref aa_t a, const ref aa_t b, ref aa_t result);
-        aa_t tmp;
-
-        foreach (a[k]) begin
-            if (!b.exists(k))
-                tmp[k] = a[k];
-        end
-
-        result = tmp;
-    endfunction : diff_into
-
-    // 构造一个纯净的新关联数组并返回差集结果。
-    static function aa_t get_diff(const ref aa_t a, const ref aa_t b);
         aa_t result;
 
-        diff_into(a, b, result);
+        intersect_into(lhs, rhs, result);
+        lhs = result;
+    endfunction : intersect_with
+
+    /**
+     * @brief Writes the difference `lhs - rhs` into `result`.
+     *
+     * Keys visible only in `lhs` are retained. For a shared key, the result
+     * value comes from `lhs`.
+     *
+     * @param lhs left-hand associative-array operand.
+     * @param rhs right-hand associative-array operand.
+     * @param result destination associative array.
+     * @post `result` keeps pre-existing keys that are not overwritten by the
+     *       difference result.
+     */
+    static function void diff_into(const ref aa_t lhs,
+                                   const ref aa_t rhs,
+                                   ref aa_t result);
+        foreach (lhs[k]) begin
+            if (!rhs.exists(k))
+                result[k] = lhs[k];
+        end
+    endfunction : diff_into
+
+    /**
+     * @brief Returns the difference `lhs - rhs`.
+     *
+     * @param lhs left-hand associative-array operand.
+     * @param rhs right-hand associative-array operand.
+     * @return a newly constructed associative array that represents the
+     *         difference result.
+     */
+    static function aa_t get_diff(const ref aa_t lhs, const ref aa_t rhs);
+        aa_t result;
+
+        diff_into(lhs, rhs, result);
         return result;
     endfunction : get_diff
 
-    // 原地差集同样采用“先收集、后删除”，避免 foreach 期间修改 lhs。
+    /**
+     * @brief Replaces `lhs` with the difference `lhs - rhs`.
+     *
+     * @param lhs destination associative array to update in place.
+     * @param rhs source associative-array operand.
+     */
     static function void diff_with(ref aa_t lhs, const ref aa_t rhs);
-        KEY_T keys_to_delete[$];
+        aa_t result;
 
-        foreach (lhs[k]) begin
-            if (rhs.exists(k))
-                keys_to_delete.push_back(k);
-        end
-
-        foreach (keys_to_delete[i])
-            lhs.delete(keys_to_delete[i]);
+        diff_into(lhs, rhs, result);
+        lhs = result;
     endfunction : diff_with
 
-    // 提取所有 key，并用 set_util 保持返回类型与集合工具一致。
+    /**
+     * @brief Returns the set of visible keys.
+     *
+     * @param a associative array to inspect.
+     * @return a key set containing every visible key in `a`.
+     */
     static function key_set_t get_keys(const ref aa_t a);
         key_set_t keys;
 
         foreach (a[k])
-            key_set_util::insert(keys, k);
+            void'(key_set_util::insert(keys, k));
 
         return keys;
     endfunction : get_keys
 
-    // 提取所有 value，并自然完成去重。
-    static function val_set_t get_values(const ref aa_t a);
-        val_set_t values;
+    /**
+     * @brief Returns the flattened queue view of visible values.
+     *
+     * This API preserves repeated values.
+     *
+     * @param a associative array to inspect.
+     * @return a queue containing the visible values of `a`.
+     */
+    static function val_q_t get_values(const ref aa_t a);
+        val_q_t values;
 
         foreach (a[k])
-            val_set_util::insert(values, a[k]);
+            values.push_back(a[k]);
 
         return values;
     endfunction : get_values
-
-endclass
+endclass : aa_util
 
 `endif
