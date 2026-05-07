@@ -62,14 +62,15 @@ class aa_value_adapter_util #(type KEY_T = int, type VAL_T = real, bit UNIQUE_EL
     /**
      * @brief Writes the merge of `lhs` and `rhs` into `result`.
      *
-     * The result keeps the union of visible keys. For shared keys, the scalar
-     * value from `rhs` is inserted into the queue stored in `lhs`.
+     * The result keeps the union of visible keys. This API updates `result` in
+     * place and preserves unrelated existing content. For a touched key, the
+     * queue stored at `result[key]` is replaced with the merged queue.
      *
      * @param lhs left-hand multimap operand. Must be normalized.
      * @param rhs right-hand scalar-map operand.
-     * @param result output multimap that receives the full merge result.
+     * @param result destination multimap to update in place.
      * @pre `lhs` does not contain keys mapped to empty queues.
-     * @post `result` is normalized.
+     * @post `result` remains normalized for the keys this API updates.
      */
     static function void merge_into(const ref aa_of_q_t lhs,
                                     const ref aa_t rhs,
@@ -130,14 +131,16 @@ class aa_value_adapter_util #(type KEY_T = int, type VAL_T = real, bit UNIQUE_EL
      * @brief Writes the intersection of `lhs` and `rhs` into `result`.
      *
      * Only keys that appear in both operands may be retained. For a shared key,
-     * the result queue becomes a singleton queue containing `rhs[key]` when the
-     * value is present in `lhs[key]`.
+     * the queue stored at `result[key]` is replaced with a singleton queue
+     * containing `rhs[key]` when the value is present in `lhs[key]`. If the
+     * resulting queue would be empty, the existing content at `result[key]` is
+     * left unchanged.
      *
      * @param lhs left-hand multimap operand. Must be normalized.
      * @param rhs right-hand scalar-map operand.
-     * @param result output multimap that receives the full intersection result.
+     * @param result destination multimap to update in place.
      * @pre `lhs` does not contain keys mapped to empty queues.
-     * @post `result` is normalized.
+     * @post `result` remains normalized for the keys this API updates.
      */
     static function void intersect_into(const ref aa_of_q_t lhs,
                                         const ref aa_t rhs,
@@ -193,14 +196,15 @@ class aa_value_adapter_util #(type KEY_T = int, type VAL_T = real, bit UNIQUE_EL
      * @brief Writes the difference `lhs - rhs` into `result`.
      *
      * Keys visible only in `lhs` are retained. For shared keys, one occurrence
-     * of `rhs[key]` is removed from the corresponding queue.
-     * Keys whose queues become empty are dropped.
+     * of `rhs[key]` is removed from the corresponding queue and the queue stored
+     * at `result[key]` is replaced with the new queue. If the resulting queue is
+     * empty, the existing content at `result[key]` is left unchanged.
      *
      * @param lhs left-hand multimap operand. Must be normalized.
      * @param rhs right-hand scalar-map operand.
-     * @param result output multimap that receives the full difference result.
+     * @param result destination multimap to update in place.
      * @pre `lhs` does not contain keys mapped to empty queues.
-     * @post `result` is normalized.
+     * @post `result` remains normalized for the keys this API updates.
      */
     static function void diff_into(const ref aa_of_q_t lhs,
                                    const ref aa_t rhs,

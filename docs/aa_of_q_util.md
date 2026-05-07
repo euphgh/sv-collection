@@ -26,7 +26,11 @@ This feature covers:
 Current high-level status:
 
 - `clean()` canonicalizes containers by removing empty-queue keys
-- `*_into()` APIs overwrite the destination with normalized results
+- `*_into()` APIs mutate `result` in place and preserve unrelated existing
+  content
+- keys touched by `merge_into()` replace the existing queue at that key
+- keys whose `intersect_into()` / `diff_into()` result is empty are left
+  unchanged in `result`
 - value-queue behavior continues to delegate to `set_util`
 
 ## Where To Read The Code

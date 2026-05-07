@@ -136,14 +136,16 @@ class aa_of_q_util #(
     /**
      * @brief Writes the merge of `lhs` and `rhs` into `result`.
      *
-     * The intended key-level contract is key union. For a key present in both
-     * operands, the result queue is derived by delegating to `val_set_util`.
+     * The intended key-level contract is key union. This API updates `result`
+     * in place and preserves unrelated existing content. For a key present in
+     * either operand, the queue stored at `result[key]` is replaced with the
+     * merged queue computed from `lhs` and `rhs`.
      *
      * @param lhs left-hand multimap operand. Must be normalized.
      * @param rhs right-hand multimap operand. Must be normalized.
-     * @param result output multimap that receives the full merge result.
+     * @param result destination multimap to update in place.
      * @pre `lhs` and `rhs` do not contain keys mapped to empty queues.
-     * @post `result` is normalized.
+     * @post `result` remains normalized for the keys this API updates.
      */
     extern static function void merge_into(
         const ref aa_of_q_t lhs,
@@ -188,14 +190,15 @@ class aa_of_q_util #(
      * @brief Writes the intersection of `lhs` and `rhs` into `result`.
      *
      * Only keys that appear in both operands may be retained. For each shared
-     * key, the result queue is `val_set_util::get_intersect(lhs[key], rhs[key])`.
-     * If that queue is empty, the key is not visible in the result.
+     * key, the queue stored at `result[key]` is replaced with
+     * `val_set_util::get_intersect(lhs[key], rhs[key])`. If that queue is empty,
+     * the existing content at `result[key]` is left unchanged.
      *
      * @param lhs left-hand multimap operand. Must be normalized.
      * @param rhs right-hand multimap operand. Must be normalized.
-     * @param result output multimap that receives the full intersection result.
+     * @param result destination multimap to update in place.
      * @pre `lhs` and `rhs` do not contain keys mapped to empty queues.
-     * @post `result` is normalized.
+     * @post `result` remains normalized for the keys this API updates.
      */
     extern static function void intersect_into(
         const ref aa_of_q_t lhs,
@@ -240,14 +243,15 @@ class aa_of_q_util #(
      * @brief Writes the difference `lhs - rhs` into `result`.
      *
      * Keys present only in `lhs` are retained. For keys present in both
-     * operands, the result queue is `val_set_util::get_diff(lhs[key], rhs[key])`.
-     * If that queue is empty, the key is not visible in the result.
+     * operands, the queue stored at `result[key]` is replaced with
+     * `val_set_util::get_diff(lhs[key], rhs[key])`. If that queue is empty,
+     * the existing content at `result[key]` is left unchanged.
      *
      * @param lhs left-hand multimap operand. Must be normalized.
      * @param rhs right-hand multimap operand. Must be normalized.
-     * @param result output multimap that receives the full difference result.
+     * @param result destination multimap to update in place.
      * @pre `lhs` and `rhs` do not contain keys mapped to empty queues.
-     * @post `result` is normalized.
+     * @post `result` remains normalized for the keys this API updates.
      */
     extern static function void diff_into(
         const ref aa_of_q_t lhs,
