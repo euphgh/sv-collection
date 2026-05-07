@@ -27,13 +27,6 @@ Current high-level status:
 - `*_into()` uses append-into-result semantics
 - `get_values()` returns a raw queue view and preserves repeated values
 
-Development note:
-
-- VCS W-2024.09-SP1 was observed to segfault on some out-of-block methods that
-  use the nested `aa_util::aa_t` type directly. The current implementation
-  keeps the affected code paths inline or otherwise avoids that return-type
-  shape.
-
 ## Where To Read The Code
 
 Start here:

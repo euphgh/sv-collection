@@ -26,9 +26,10 @@ If detailed behavior is already documented in code comments, do not duplicate
 that detail in `docs/` or `README`. Those documents should guide readers toward
 the relevant code rather than restating the full contract.
 
-If you need code-related design notes, API contracts, or framework documents,
-look in the `docs/` directory first for orientation, then move to the source
-files for authoritative detail.
+If you need code-related design notes, API contracts, framework documents, or
+shared development notes, look in the `docs/` directory first for orientation,
+then move to the source files for authoritative detail. For repository-wide
+pitfalls, recurring toolchain issues, or TODO lists, check `docs/development_log.md`.
 
 ## Documentation Style
 
