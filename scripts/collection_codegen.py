@@ -139,6 +139,7 @@ class ParsedSource:
 
     source_path: Path
     class_name: str
+    array_dim_name: str
     output_target: str
     functions: list[MarkedFunction]
 
@@ -147,7 +148,7 @@ INCLUDE_RE = re.compile(r'^`include\s+"([^"]+)"\s*$')
 DECL_RE = re.compile(
     r'^extern\s+static\s+function\s+(.+?)\s+([A-Za-z_][A-Za-z0-9_]*)\s*\((.*)\)\s*;$'
 )
-CLASS_RE = re.compile(r'^class\s+([A-Za-z_][A-Za-z0-9_]*)\b')
+CLASS_RE = re.compile(r'^class\s+([A-Za-z_][A-Za-z0-9_]*)\b(?:\s*#\((.*)\))?\s*;?$')
 REDUCE_RE = re.compile(r'^//\s*gen:reduce=(and|or|xor)\s*$')
 NATIVE_TYPES = {
     "bit",
@@ -197,28 +198,70 @@ def find_output_target(lines: list[str]) -> str:
     return target
 
 
-def find_class_name(lines: list[str]) -> str:
+def _parse_class_array_dim(class_params: str | None) -> str:
+    """@brief Extracts the array dimension parameter name from a class header."""
+    if class_params is None:
+        raise ValueError("class declaration is missing parameter list")
+
+    params = [item.strip() for item in _split_params(class_params) if item.strip()]
+    if not params:
+        raise ValueError("class declaration has an empty parameter list")
+
+    for param in params:
+        if param.startswith("type ") or param.startswith("parameter type "):
+            continue
+
+        match = re.match(r"^.*\b([A-Za-z_][A-Za-z0-9_]*)\s*(?:=|$)", param)
+        if match is not None:
+            return match.group(1)
+
+        raise ValueError(f"unable to parse class parameter: {param}")
+
+    raise ValueError("class declaration does not declare an array dimension parameter")
+
+
+def find_class_info(lines: list[str]) -> tuple[str, str]:
     """@brief Finds the single class declaration in the source file.
 
     The generator contract requires exactly one `class` declaration per input
     file.
     """
     class_name: str | None = None
+    array_dim_name: str | None = None
+    idx = 0
 
-    for line in lines:
-        match = CLASS_RE.match(line.strip())
-        if match is None:
+    while idx < len(lines):
+        stripped = lines[idx].strip()
+        if not stripped.startswith("class "):
+            idx += 1
             continue
 
         if class_name is not None:
             raise ValueError("multiple class declarations found")
 
+        header_parts = [stripped]
+        while not header_parts[-1].endswith(";"):
+            idx += 1
+            if idx >= len(lines):
+                raise ValueError("unterminated class declaration")
+            header_parts.append(lines[idx].strip())
+
+        header_text = " ".join(header_parts)
+        match = CLASS_RE.match(header_text)
+        if match is None:
+            raise ValueError(f"unable to parse class declaration: {header_text}")
+
         class_name = match.group(1)
+        array_dim_name = _parse_class_array_dim(match.group(2))
+        idx += 1
 
     if class_name is None:
         raise ValueError("no class declaration found")
 
-    return class_name
+    if array_dim_name is None:
+        raise ValueError("unable to parse class array dimension name")
+
+    return class_name, array_dim_name
 
 
 def _collect_declaration(lines: list[str], start_idx: int) -> tuple[str, int]:
@@ -363,9 +406,11 @@ def collect_marked_functions(lines: list[str]) -> list[MarkedFunction]:
 def parse_source(path: Path) -> ParsedSource:
     """@brief Parses a source file and returns its generation metadata."""
     lines = read_lines(path)
+    class_name, array_dim_name = find_class_info(lines)
     return ParsedSource(
         source_path=path,
-        class_name=find_class_name(lines),
+        class_name=class_name,
+        array_dim_name=array_dim_name,
         output_target=find_output_target(lines),
         functions=collect_marked_functions(lines),
     )

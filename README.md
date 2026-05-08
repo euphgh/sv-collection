@@ -10,6 +10,7 @@ testbenches under `tests/`, and high-level navigation pages under `docs/`.
 - `set_util`: queue-based set utilities
 - `set_array_util`: fixed-size array-of-set utilities
 - `aa_util`: associative-array utilities for map-style containers
+- `aa_array_util`: fixed-size array-of-associative-array utilities
 - `aa_of_q_util`: associative-array-of-queue utilities for multimap-style
   containers
 - `aa_value_adapter_util`: bridge between `aa_of_q_t` and `aa_t`
@@ -26,6 +27,9 @@ scripts/run_vcs_tb.sh tests/aa_util_tb.sv
 scripts/run_vcs_tb.sh tests/aa_of_q_util_tb.sv
 scripts/run_vcs_tb.sh tests/aa_value_adapter_util_tb.sv
 ```
+
+Use `scripts/generate_array_util.py` for the generated `set_array_util` and
+`aa_array_util` implementation files.
 
 The script keeps generated artifacts under `build/vcs/`.
 
@@ -45,6 +49,7 @@ targeted `slang` commands referenced in `AGENTS.md`.
 - `docs/set_util.md`
 - `docs/set_array_util.md`
 - `docs/aa_util.md`
+- `docs/aa_array_util.md`
 - `docs/aa_of_q_util.md`
 - `docs/aa_value_adapter_util.md`
 - `docs/build_and_test.md`
