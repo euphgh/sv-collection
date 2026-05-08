@@ -118,9 +118,19 @@ class MarkedFunction:
             for param in self.params
         )
 
-    def render_call_args(self, index_expr: str | None = None) -> str:
-        """@brief Renders the parameter list for a forwarded function call."""
-        return ", ".join(param.render_call(index_expr) for param in self.params)
+    def render_call_args(self, index_expr: str | None = None, forward_custom: bool = True) -> str:
+        """@brief Renders the parameter list for a forwarded function call.
+
+        When `forward_custom` is true, custom array-shaped parameters are indexed
+        using `index_expr` and native scalar parameters are forwarded unchanged.
+        """
+        args: list[str] = []
+        for param in self.params:
+            if forward_custom and param.type_spec.kind == TypeKind.CUSTOM:
+                args.append(param.render_call(index_expr))
+            else:
+                args.append(param.render_call(None))
+        return ", ".join(args)
 
 
 @dataclass(frozen=True)
@@ -128,6 +138,7 @@ class ParsedSource:
     """@brief Captures the parsed source file and generation target."""
 
     source_path: Path
+    class_name: str
     output_target: str
     functions: list[MarkedFunction]
 
@@ -136,6 +147,7 @@ INCLUDE_RE = re.compile(r'^`include\s+"([^"]+)"\s*$')
 DECL_RE = re.compile(
     r'^extern\s+static\s+function\s+(.+?)\s+([A-Za-z_][A-Za-z0-9_]*)\s*\((.*)\)\s*;$'
 )
+CLASS_RE = re.compile(r'^class\s+([A-Za-z_][A-Za-z0-9_]*)\b')
 REDUCE_RE = re.compile(r'^//\s*gen:reduce=(and|or|xor)\s*$')
 NATIVE_TYPES = {
     "bit",
@@ -183,6 +195,30 @@ def find_output_target(lines: list[str]) -> str:
         raise ValueError("no // @gen:output directive found")
 
     return target
+
+
+def find_class_name(lines: list[str]) -> str:
+    """@brief Finds the single class declaration in the source file.
+
+    The generator contract requires exactly one `class` declaration per input
+    file.
+    """
+    class_name: str | None = None
+
+    for line in lines:
+        match = CLASS_RE.match(line.strip())
+        if match is None:
+            continue
+
+        if class_name is not None:
+            raise ValueError("multiple class declarations found")
+
+        class_name = match.group(1)
+
+    if class_name is None:
+        raise ValueError("no class declaration found")
+
+    return class_name
 
 
 def _collect_declaration(lines: list[str], start_idx: int) -> tuple[str, int]:
@@ -329,6 +365,7 @@ def parse_source(path: Path) -> ParsedSource:
     lines = read_lines(path)
     return ParsedSource(
         source_path=path,
+        class_name=find_class_name(lines),
         output_target=find_output_target(lines),
         functions=collect_marked_functions(lines),
     )

@@ -14,6 +14,8 @@ Feature contract:
 - `// gen:reduce=and|or|xor` is required for generated non-`void` functions.
 - `// @gen:output` must appear immediately above the include line that names
   the generated output file.
+- Each input `.svh` file must define exactly one `class` declaration.
+- The generator derives the output class name from that declaration.
 - Unsupported signatures fail fast.
 
 Forwarding contract:
@@ -50,69 +52,72 @@ from collection_codegen import (
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def _render_call_args(func: MarkedFunction, index_expr: str | None) -> str:
-    """@brief Renders a feature-neutral forwarded call argument list."""
-    args: list[str] = []
-    for param in func.params:
-        args.append(
-            param.render_call(
-                None if param.type_spec.kind == TypeKind.NATIVE else index_expr
-            )
-        )
-    return ", ".join(args)
+class ArrayFeatureRenderer:
+    """@brief Renders array-style feature bodies from a parsed source file.
 
-
-def _render_decl_params(func: MarkedFunction) -> str:
-    """@brief Renders a feature-neutral function declaration parameter list."""
-    return ", ".join(param.render_signature() for param in func.params)
-
-
-def render_void_function(func: MarkedFunction) -> str:
-    """@brief Renders a generated void-return function body.
-    The current `set_array_util` feature uses this for slot-wise collection
-    operations whose array-shaped parameters are forwarded element-wise.
+    The renderer is feature-neutral except for the configuration supplied by the
+    feature script:
+    - array type alias names
+    - element utility alias name
+    - supported generated function names
+    - how to render scalar reductions
     """
-    decl_params = _render_decl_params(func)
-    call_args = _render_call_args(func, "i")
 
-    return f"""function void set_array_util::{func.name}({decl_params});
+    def __init__(self, elem_util_name: str):
+        self.elem_util_name = elem_util_name
+
+    def render_void_function(self, class_name: str, func: MarkedFunction) -> str:
+        """@brief Renders a generated void-return function body."""
+        decl_params = func.render_signature_params()
+        call_args = func.render_call_args("i", forward_custom=True)
+
+        return f"""function void {class_name}::{func.name}({decl_params});
     for (int i = 0; i < SIZE; i++)
-        elem_util::{func.name}({call_args});
+        {self.elem_util_name}::{func.name}({call_args});
 endfunction : {func.name}
 """
 
+    def render_scalar_function(self, class_name: str, func: MarkedFunction) -> str:
+        """@brief Renders a generated scalar-return function body."""
+        if func.reduce_op is None:
+            raise ValueError(f"missing reduction operator for {func.name}")
 
-def render_scalar_function(func: MarkedFunction) -> str:
-    """@brief Renders a generated scalar-return function body.
+        if func.return_type.kind != TypeKind.NATIVE or func.return_type.text != "bit":
+            raise ValueError(
+                f"unsupported scalar return type for {func.name}: {func.return_type.text}"
+            )
 
-    The function renders the element-wise calls into a temporary array and uses the
-    native SystemVerilog array reduction method configured by `gen:reduce`.
-    """
-    if func.name not in {"equals", "contains"}:
-        raise ValueError(f"unsupported scalar generated function: {func.name}")
+        decl_params = func.render_signature_params()
+        call_args = func.render_call_args("i", forward_custom=True)
+        reduce_method = func.reduce_op
 
-    if func.reduce_op is None:
-        raise ValueError(f"missing reduction operator for {func.name}")
-
-    if func.return_type.kind != TypeKind.NATIVE or func.return_type.text != "bit":
-        raise ValueError(
-            f"unsupported scalar return type for {func.name}: {func.return_type.text}"
-        )
-
-    decl_params = _render_decl_params(func)
-    call_args = _render_call_args(func, "i")
-    reduce_method = func.reduce_op
-
-    return f"""function {func.return_type.render()} set_array_util::{func.name}({decl_params});
+        return f"""function {func.return_type.render()} {class_name}::{func.name}({decl_params});
     bit partials[SIZE];
 
     foreach (partials[i]) begin
-        partials[i] = elem_util::{func.name}({call_args});
+        partials[i] = {self.elem_util_name}::{func.name}({call_args});
     end
 
     return partials.{reduce_method}();
 endfunction : {func.name}
 """
+
+    def render_generated_source(self, parsed: ParsedSource) -> str:
+        """@brief Renders the generated SystemVerilog implementation file."""
+        pieces = [render_output_file_header(parsed.source_path.name), ""]
+
+        for func in parsed.functions:
+            if func.return_type.kind == TypeKind.VOID:
+                pieces.append(
+                    self.render_void_function(parsed.class_name, func).rstrip()
+                )
+            else:
+                pieces.append(
+                    self.render_scalar_function(parsed.class_name, func).rstrip()
+                )
+            pieces.append("")
+
+        return "\n".join(pieces).rstrip() + "\n"
 
 
 def render_generated_source(parsed: ParsedSource) -> str:
@@ -146,7 +151,8 @@ def main() -> None:
     parsed = parse_source(source_path)
     output_path = (source_path.parent / parsed.output_target).resolve()
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(render_generated_source(parsed), encoding="utf-8")
+    renderer = ArrayFeatureRenderer(elem_util_name="elem_util")
+    output_path.write_text(renderer.render_generated_source(parsed), encoding="utf-8")
 
 
 if __name__ == "__main__":
