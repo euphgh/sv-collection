@@ -112,6 +112,11 @@ If you are changing slot-level set semantics, check `set_util.svh` first.
 If you are changing array-level collection semantics, this is the main file to
 change.
 
+## Generator
+
+The generated implementation for this feature is produced by
+`scripts/generate_array_util.py`.
+
 ## Notes For Readers
 
 - Use this `docs/` page for orientation, not for authoritative API details.

@@ -73,6 +73,11 @@ For someone trying to understand this feature:
 If a bank-local result can already be obtained directly from `aa_util` or plain
 array indexing, `aa_array_util` should not add a wrapper for it.
 
+## Generator
+
+The generated implementation for this feature is produced by
+`scripts/generate_array_util.py`.
+
 If you are changing map-style associative-array semantics, check `aa_util.svh`
 first.
 If you are changing array-level collection semantics, this is the main file to

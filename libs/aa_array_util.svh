@@ -38,14 +38,9 @@ class aa_array_util #(int unsigned SIZE = 4,
      * @param rhs right-hand array operand.
      * @return `1` if every corresponding bank is equal; otherwise returns `0`.
      */
-    static function bit equals(const ref aa_array_t lhs, const ref aa_array_t rhs);
-        for (int unsigned i = 0; i < SIZE; i++) begin
-            if (!elem_util::equals(lhs[i], rhs[i]))
-                return 0;
-        end
-
-        return 1;
-    endfunction : equals
+    // @gen
+    // gen:reduce=and
+    extern static function bit equals(const ref aa_array_t lhs, const ref aa_array_t rhs);
 
     /**
      * @brief Determines whether `rhs` is contained in `lhs` bank by bank.
@@ -55,14 +50,9 @@ class aa_array_util #(int unsigned SIZE = 4,
      * @return `1` if every corresponding bank of `rhs` is contained in the
      *         matching bank of `lhs`; otherwise returns `0`.
      */
-    static function bit contains(const ref aa_array_t lhs, const ref aa_array_t rhs);
-        for (int unsigned i = 0; i < SIZE; i++) begin
-            if (!elem_util::contains(lhs[i], rhs[i]))
-                return 0;
-        end
-
-        return 1;
-    endfunction : contains
+    // @gen
+    // gen:reduce=and
+    extern static function bit contains(const ref aa_array_t lhs, const ref aa_array_t rhs);
 
     /**
      * @brief Writes the bank-wise merge of `lhs` and `rhs` into `result`.
@@ -74,12 +64,10 @@ class aa_array_util #(int unsigned SIZE = 4,
      * @param rhs right-hand array operand.
      * @param result destination array.
      */
-    static function void merge_into(const ref aa_array_t lhs,
-                                    const ref aa_array_t rhs,
-                                    ref aa_array_t result);
-        for (int unsigned i = 0; i < SIZE; i++)
-            elem_util::merge_into(lhs[i], rhs[i], result[i]);
-    endfunction : merge_into
+    // @gen
+    extern static function void merge_into(const ref aa_array_t lhs,
+                                           const ref aa_array_t rhs,
+                                           ref aa_array_t result);
 
     /**
      * @brief Returns the bank-wise merge of `lhs` and `rhs`.
@@ -102,10 +90,8 @@ class aa_array_util #(int unsigned SIZE = 4,
      * @param lhs destination array to update in place.
      * @param rhs source array to merge from.
      */
-    static function void merge_with(ref aa_array_t lhs, const ref aa_array_t rhs);
-        for (int unsigned i = 0; i < SIZE; i++)
-            elem_util::merge_with(lhs[i], rhs[i]);
-    endfunction : merge_with
+    // @gen
+    extern static function void merge_with(ref aa_array_t lhs, const ref aa_array_t rhs);
 
     /**
      * @brief Writes the bank-wise intersection of `lhs` and `rhs` into `result`.
@@ -117,12 +103,10 @@ class aa_array_util #(int unsigned SIZE = 4,
      * @param rhs right-hand array operand.
      * @param result destination array.
      */
-    static function void intersect_into(const ref aa_array_t lhs,
-                                        const ref aa_array_t rhs,
-                                        ref aa_array_t result);
-        for (int unsigned i = 0; i < SIZE; i++)
-            elem_util::intersect_into(lhs[i], rhs[i], result[i]);
-    endfunction : intersect_into
+    // @gen
+    extern static function void intersect_into(const ref aa_array_t lhs,
+                                               const ref aa_array_t rhs,
+                                               ref aa_array_t result);
 
     /**
      * @brief Returns the bank-wise intersection of `lhs` and `rhs`.
@@ -145,10 +129,8 @@ class aa_array_util #(int unsigned SIZE = 4,
      * @param lhs destination array to update in place.
      * @param rhs source array to intersect with.
      */
-    static function void intersect_with(ref aa_array_t lhs, const ref aa_array_t rhs);
-        for (int unsigned i = 0; i < SIZE; i++)
-            elem_util::intersect_with(lhs[i], rhs[i]);
-    endfunction : intersect_with
+    // @gen
+    extern static function void intersect_with(ref aa_array_t lhs, const ref aa_array_t rhs);
 
     /**
      * @brief Writes the bank-wise difference `lhs - rhs` into `result`.
@@ -160,12 +142,10 @@ class aa_array_util #(int unsigned SIZE = 4,
      * @param rhs right-hand array operand.
      * @param result destination array.
      */
-    static function void diff_into(const ref aa_array_t lhs,
-                                   const ref aa_array_t rhs,
-                                   ref aa_array_t result);
-        for (int unsigned i = 0; i < SIZE; i++)
-            elem_util::diff_into(lhs[i], rhs[i], result[i]);
-    endfunction : diff_into
+    // @gen
+    extern static function void diff_into(const ref aa_array_t lhs,
+                                          const ref aa_array_t rhs,
+                                          ref aa_array_t result);
 
     /**
      * @brief Returns the bank-wise difference `lhs - rhs`.
@@ -188,10 +168,8 @@ class aa_array_util #(int unsigned SIZE = 4,
      * @param lhs destination array to update in place.
      * @param rhs source array to subtract.
      */
-    static function void diff_with(ref aa_array_t lhs, const ref aa_array_t rhs);
-        for (int unsigned i = 0; i < SIZE; i++)
-            elem_util::diff_with(lhs[i], rhs[i]);
-    endfunction : diff_with
+    // @gen
+    extern static function void diff_with(ref aa_array_t lhs, const ref aa_array_t rhs);
 
     /**
      * @brief Returns the key set for every bank.
@@ -243,5 +221,8 @@ class aa_array_util #(int unsigned SIZE = 4,
         $display("%s", sprint(aa_array, name));
     endfunction : print
 endclass : aa_array_util
+
+// @gen:output
+`include "generated/aa_array_util.svh"
 
 `endif

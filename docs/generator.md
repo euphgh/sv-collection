@@ -39,6 +39,8 @@ script header comments.
 The script-side parser is intended to stay reusable across `set_array_util` and
 future `aa_*` array generators.
 
+The shared implementation lives in `scripts/generate_array_util.py`.
+
 ## Generated Output Location
 
 The output file is typically placed under `libs/generated/`.
@@ -57,7 +59,8 @@ The output include line is part of the feature source contract, not this page.
 Start here:
 
 - `libs/set_array_util.svh`
-- `scripts/generate_set_array_util.py`
+- `libs/aa_array_util.svh`
+- `scripts/generate_array_util.py`
 
 Then read the generated output file in `libs/generated/` to see the split
 between contract and implementation.
