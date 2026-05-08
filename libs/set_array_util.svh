@@ -41,15 +41,8 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
      * @return `1` if every corresponding slot is equal; otherwise returns `0`.
      * @pre `UNIQUE_ELEM == 1`.
      */
-    static function bit equals(const ref set_array_t lhs,
-                             const ref set_array_t rhs);
-        for (int i = 0; i < SIZE; i++) begin
-            if (!set_elem_util_t::equals(lhs[i], rhs[i]))
-                return 0;
-        end
-
-        return 1;
-    endfunction : equals
+    extern static function bit equals(const ref set_array_t lhs,
+                                      const ref set_array_t rhs);
 
     /**
      * @brief Determines whether `rhs` is contained in `lhs`.
@@ -62,15 +55,8 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
      *         of `lhs`; otherwise returns `0`.
      * @pre `UNIQUE_ELEM == 1`.
      */
-    static function bit contains(const ref set_array_t lhs,
-                                 const ref set_array_t rhs);
-        foreach (rhs[i]) begin
-            if (!set_elem_util_t::contains(lhs[i], rhs[i]))
-                return 0;
-        end
-
-        return 1;
-    endfunction : contains
+    extern static function bit contains(const ref set_array_t lhs,
+                                        const ref set_array_t rhs);
 
     /**
      * @brief Writes the slot-wise union of `lhs` and `rhs` into `result`.
@@ -85,12 +71,9 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
      * @post `result` retains its original content plus the union result in each
      *       slot.
      */
-    static function void union_into(const ref set_array_t lhs,
-                                    const ref set_array_t rhs,
-                                    ref set_array_t result);
-        for (int i = 0; i < SIZE; i++)
-            set_elem_util_t::union_into(lhs[i], rhs[i], result[i]);
-    endfunction : union_into
+    extern static function void union_into(const ref set_array_t lhs,
+                                           const ref set_array_t rhs,
+                                           ref set_array_t result);
 
     /**
      * @brief Returns the slot-wise union of `lhs` and `rhs`.
@@ -116,11 +99,8 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
      * @param rhs source array to merge from.
      * @pre `UNIQUE_ELEM == 1`.
      */
-    static function void union_with(ref set_array_t lhs,
-                                    const ref set_array_t rhs);
-        for (int i = 0; i < SIZE; i++)
-            set_elem_util_t::union_with(lhs[i], rhs[i]);
-    endfunction : union_with
+    extern static function void union_with(ref set_array_t lhs,
+                                           const ref set_array_t rhs);
 
     /**
      * @brief Writes the slot-wise intersection of `lhs` and `rhs` into `result`.
@@ -132,12 +112,9 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
      * @post `result` retains its original content plus the intersection result
      *       in each slot.
      */
-    static function void intersect_into(const ref set_array_t lhs,
-                                        const ref set_array_t rhs,
-                                        ref set_array_t result);
-        for (int i = 0; i < SIZE; i++)
-            set_elem_util_t::intersect_into(lhs[i], rhs[i], result[i]);
-    endfunction : intersect_into
+    extern static function void intersect_into(const ref set_array_t lhs,
+                                               const ref set_array_t rhs,
+                                               ref set_array_t result);
 
     /**
      * @brief Returns the slot-wise intersection of `lhs` and `rhs`.
@@ -163,11 +140,8 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
      * @param rhs source array to intersect with.
      * @pre `UNIQUE_ELEM == 1`.
      */
-    static function void intersect_with(ref set_array_t lhs,
-                                        const ref set_array_t rhs);
-        for (int i = 0; i < SIZE; i++)
-            set_elem_util_t::intersect_with(lhs[i], rhs[i]);
-    endfunction : intersect_with
+    extern static function void intersect_with(ref set_array_t lhs,
+                                               const ref set_array_t rhs);
 
     /**
      * @brief Writes the slot-wise difference `lhs - rhs` into `result`.
@@ -179,12 +153,9 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
      * @post `result` retains its original content plus the difference result in
      *       each slot.
      */
-    static function void diff_into(const ref set_array_t lhs,
-                                   const ref set_array_t rhs,
-                                   ref set_array_t result);
-        for (int i = 0; i < SIZE; i++)
-            set_elem_util_t::diff_into(lhs[i], rhs[i], result[i]);
-    endfunction : diff_into
+    extern static function void diff_into(const ref set_array_t lhs,
+                                          const ref set_array_t rhs,
+                                          ref set_array_t result);
 
     /**
      * @brief Returns the slot-wise difference `lhs - rhs`.
@@ -210,11 +181,8 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
      * @param rhs source array to subtract.
      * @pre `UNIQUE_ELEM == 1`.
      */
-    static function void diff_with(ref set_array_t lhs,
-                                   const ref set_array_t rhs);
-        for (int i = 0; i < SIZE; i++)
-            set_elem_util_t::diff_with(lhs[i], rhs[i]);
-    endfunction : diff_with
+    extern static function void diff_with(ref set_array_t lhs,
+                                          const ref set_array_t rhs);
 
     /**
      * @brief Returns a row-based string representation of the array.
@@ -249,9 +217,11 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
      * @pre `UNIQUE_ELEM == 1`.
      */
     static function void print(const ref set_array_t array,
-                             input string name = "bank_mem");
+                              input string name = "bank_mem");
         $display("%s", sprint(array, name));
     endfunction : print
-endclass
+endclass : set_array_util
+
+`include "generated/set_array_util.svh"
 
 `endif
