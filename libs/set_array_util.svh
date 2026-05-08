@@ -41,6 +41,8 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
      * @return `1` if every corresponding slot is equal; otherwise returns `0`.
      * @pre `UNIQUE_ELEM == 1`.
      */
+    // @gen
+    // gen:reduce=and
     extern static function bit equals(const ref set_array_t lhs,
                                       const ref set_array_t rhs);
 
@@ -55,6 +57,8 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
      *         of `lhs`; otherwise returns `0`.
      * @pre `UNIQUE_ELEM == 1`.
      */
+    // @gen
+    // gen:reduce=and
     extern static function bit contains(const ref set_array_t lhs,
                                         const ref set_array_t rhs);
 
@@ -71,9 +75,10 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
      * @post `result` retains its original content plus the union result in each
      *       slot.
      */
+    // @gen
     extern static function void union_into(const ref set_array_t lhs,
-                                           const ref set_array_t rhs,
-                                           ref set_array_t result);
+                                            const ref set_array_t rhs,
+                                            ref set_array_t result);
 
     /**
      * @brief Returns the slot-wise union of `lhs` and `rhs`.
@@ -99,6 +104,7 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
      * @param rhs source array to merge from.
      * @pre `UNIQUE_ELEM == 1`.
      */
+    // @gen
     extern static function void union_with(ref set_array_t lhs,
                                            const ref set_array_t rhs);
 
@@ -112,9 +118,10 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
      * @post `result` retains its original content plus the intersection result
      *       in each slot.
      */
+    // @gen
     extern static function void intersect_into(const ref set_array_t lhs,
-                                               const ref set_array_t rhs,
-                                               ref set_array_t result);
+                                                const ref set_array_t rhs,
+                                                ref set_array_t result);
 
     /**
      * @brief Returns the slot-wise intersection of `lhs` and `rhs`.
@@ -140,6 +147,7 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
      * @param rhs source array to intersect with.
      * @pre `UNIQUE_ELEM == 1`.
      */
+    // @gen
     extern static function void intersect_with(ref set_array_t lhs,
                                                const ref set_array_t rhs);
 
@@ -153,9 +161,10 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
      * @post `result` retains its original content plus the difference result in
      *       each slot.
      */
+    // @gen
     extern static function void diff_into(const ref set_array_t lhs,
-                                          const ref set_array_t rhs,
-                                          ref set_array_t result);
+                                           const ref set_array_t rhs,
+                                           ref set_array_t result);
 
     /**
      * @brief Returns the slot-wise difference `lhs - rhs`.
@@ -181,6 +190,7 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
      * @param rhs source array to subtract.
      * @pre `UNIQUE_ELEM == 1`.
      */
+    // @gen
     extern static function void diff_with(ref set_array_t lhs,
                                           const ref set_array_t rhs);
 
@@ -222,6 +232,7 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
     endfunction : print
 endclass : set_array_util
 
+// @gen:output
 `include "generated/set_array_util.svh"
 
 `endif

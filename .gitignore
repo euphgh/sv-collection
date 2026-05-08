@@ -1,2 +1,4 @@
 build/
 session.json
+__pycache__/
+generated/
