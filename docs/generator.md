@@ -36,6 +36,9 @@ The shared pattern is:
 The exact marker syntax, script usage, and validation rules live in the Python
 script header comments.
 
+The script-side parser is intended to stay reusable across `set_array_util` and
+future `aa_*` array generators.
+
 ## Generated Output Location
 
 The output file is typically placed under `libs/generated/`.
@@ -46,6 +49,8 @@ above the `include` statement.
 
 Read the feature source file and the generator script together to see the exact
 layout.
+
+The output include line is part of the feature source contract, not this page.
 
 ## What To Read Next
 

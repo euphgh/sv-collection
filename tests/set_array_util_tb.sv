@@ -81,27 +81,27 @@ module set_array_util_tb;
         result[3] = '{99};
 
         int_set_array_util_t::union_into(lhs, rhs, result);
-        check_true(int_set_array_util_t::set_elem_util_t::count(result[0], 1) == 1 &&
-                   int_set_array_util_t::set_elem_util_t::count(result[0], 2) == 1,
+        check_true(int_set_array_util_t::elem_util::count(result[0], 1) == 1 &&
+                   int_set_array_util_t::elem_util::count(result[0], 2) == 1,
                    $sformatf("union_into should merge bank 0 keys result=%p lhs=%p rhs=%p", result, lhs, rhs));
-        check_true(int_set_array_util_t::set_elem_util_t::count(result[1], 10) == 1,
+        check_true(int_set_array_util_t::elem_util::count(result[1], 10) == 1,
                    $sformatf("union_into should keep shared bank key result=%p lhs=%p rhs=%p", result, lhs, rhs));
-        check_true(int_set_array_util_t::set_elem_util_t::count(result[2], 20) == 1,
+        check_true(int_set_array_util_t::elem_util::count(result[2], 20) == 1,
                    $sformatf("union_into should add rhs-only bank key result=%p lhs=%p rhs=%p", result, lhs, rhs));
-        check_true(int_set_array_util_t::set_elem_util_t::count(result[3], 99) == 1,
+        check_true(int_set_array_util_t::elem_util::count(result[3], 99) == 1,
                    $sformatf("union_into should preserve preexisting result content in untouched bank result=%p", result));
 
         exact_union = int_set_array_util_t::get_union(lhs, rhs);
         check_true(exact_union[0].size() == 2,
                    $sformatf("get_union should return pure bank union result exact_union=%p", exact_union));
-        check_true(int_set_array_util_t::set_elem_util_t::count(exact_union[2], 20) == 1,
+        check_true(int_set_array_util_t::elem_util::count(exact_union[2], 20) == 1,
                    $sformatf("get_union should include rhs-only bank content exact_union=%p", exact_union));
 
         int_set_array_util_t::union_with(lhs, rhs);
-        check_true(int_set_array_util_t::set_elem_util_t::count(lhs[0], 1) == 1 &&
-                   int_set_array_util_t::set_elem_util_t::count(lhs[0], 2) == 1,
+        check_true(int_set_array_util_t::elem_util::count(lhs[0], 1) == 1 &&
+                   int_set_array_util_t::elem_util::count(lhs[0], 2) == 1,
                    $sformatf("union_with should mutate bank 0 lhs=%p", lhs));
-        check_true(int_set_array_util_t::set_elem_util_t::count(lhs[2], 20) == 1,
+        check_true(int_set_array_util_t::elem_util::count(lhs[2], 20) == 1,
                    $sformatf("union_with should append rhs-only bank content lhs=%p", lhs));
     endtask
 
@@ -112,75 +112,75 @@ module set_array_util_tb;
         int_set_array_t exact_intersect;
         int_set_array_t exact_diff;
 
-        void'(int_set_array_util_t::set_elem_util_t::insert(lhs[0], 1));
-        void'(int_set_array_util_t::set_elem_util_t::insert(lhs[0], 2));
-        void'(int_set_array_util_t::set_elem_util_t::insert(lhs[1], 10));
-        void'(int_set_array_util_t::set_elem_util_t::insert(lhs[2], 20));
+        void'(int_set_array_util_t::elem_util::insert(lhs[0], 1));
+        void'(int_set_array_util_t::elem_util::insert(lhs[0], 2));
+        void'(int_set_array_util_t::elem_util::insert(lhs[1], 10));
+        void'(int_set_array_util_t::elem_util::insert(lhs[2], 20));
 
-        void'(int_set_array_util_t::set_elem_util_t::insert(rhs[0], 2));
-        void'(int_set_array_util_t::set_elem_util_t::insert(rhs[1], 11));
-        void'(int_set_array_util_t::set_elem_util_t::insert(rhs[2], 20));
+        void'(int_set_array_util_t::elem_util::insert(rhs[0], 2));
+        void'(int_set_array_util_t::elem_util::insert(rhs[1], 11));
+        void'(int_set_array_util_t::elem_util::insert(rhs[2], 20));
 
-        void'(int_set_array_util_t::set_elem_util_t::insert(result[3], 99));
+        void'(int_set_array_util_t::elem_util::insert(result[3], 99));
 
         int_set_array_util_t::intersect_into(lhs, rhs, result);
-        check_true(int_set_array_util_t::set_elem_util_t::count(result[0], 2) == 1,
+        check_true(int_set_array_util_t::elem_util::count(result[0], 2) == 1,
                    $sformatf("intersect_into should keep shared key in bank 0 result=%p lhs=%p rhs=%p", result, lhs, rhs));
-        check_true(int_set_array_util_t::set_elem_util_t::count(result[1], 10) == 0,
+        check_true(int_set_array_util_t::elem_util::count(result[1], 10) == 0,
                    $sformatf("intersect_into should not keep lhs-only bank entry result=%p lhs=%p rhs=%p", result, lhs, rhs));
-        check_true(int_set_array_util_t::set_elem_util_t::count(result[2], 20) == 1,
+        check_true(int_set_array_util_t::elem_util::count(result[2], 20) == 1,
                    $sformatf("intersect_into should keep shared bank 2 key result=%p lhs=%p rhs=%p", result, lhs, rhs));
-        check_true(int_set_array_util_t::set_elem_util_t::count(result[3], 99) == 1,
+        check_true(int_set_array_util_t::elem_util::count(result[3], 99) == 1,
                    $sformatf("intersect_into should preserve existing result content in untouched bank result=%p", result));
 
         exact_intersect = int_set_array_util_t::get_intersect(lhs, rhs);
         check_true(exact_intersect[0].size() == 1 &&
-                   int_set_array_util_t::set_elem_util_t::count(exact_intersect[0], 2) == 1,
+                   int_set_array_util_t::elem_util::count(exact_intersect[0], 2) == 1,
                    $sformatf("get_intersect should return pure bank intersection exact_intersect=%p", exact_intersect));
         check_true(exact_intersect[1].size() == 0,
                    $sformatf("get_intersect should return empty set for non-overlapping bank exact_intersect=%p", exact_intersect));
 
         int_set_array_util_t::intersect_with(lhs, rhs);
         check_true(lhs[0].size() == 1 &&
-                   int_set_array_util_t::set_elem_util_t::count(lhs[0], 2) == 1,
+                   int_set_array_util_t::elem_util::count(lhs[0], 2) == 1,
                    $sformatf("intersect_with should mutate bank 0 to intersection lhs=%p", lhs));
         check_true(lhs[1].size() == 0,
                    $sformatf("intersect_with should clear non-overlapping bank lhs=%p", lhs));
-        check_true(int_set_array_util_t::set_elem_util_t::count(lhs[2], 20) == 1,
+        check_true(int_set_array_util_t::elem_util::count(lhs[2], 20) == 1,
                    $sformatf("intersect_with should keep overlapping bank key lhs=%p", lhs));
 
         lhs[0].delete();
         lhs[1].delete();
         lhs[2].delete();
-        void'(int_set_array_util_t::set_elem_util_t::insert(lhs[0], 1));
-        void'(int_set_array_util_t::set_elem_util_t::insert(lhs[0], 2));
-        void'(int_set_array_util_t::set_elem_util_t::insert(lhs[1], 10));
-        void'(int_set_array_util_t::set_elem_util_t::insert(lhs[2], 20));
+        void'(int_set_array_util_t::elem_util::insert(lhs[0], 1));
+        void'(int_set_array_util_t::elem_util::insert(lhs[0], 2));
+        void'(int_set_array_util_t::elem_util::insert(lhs[1], 10));
+        void'(int_set_array_util_t::elem_util::insert(lhs[2], 20));
 
         int_set_array_util_t::diff_into(lhs, rhs, result);
-        check_true(int_set_array_util_t::set_elem_util_t::count(result[0], 1) == 1,
+        check_true(int_set_array_util_t::elem_util::count(result[0], 1) == 1,
                    $sformatf("diff_into should add lhs-only key in bank 0 result=%p lhs=%p rhs=%p", result, lhs, rhs));
-        check_true(int_set_array_util_t::set_elem_util_t::count(result[0], 2) == 1,
+        check_true(int_set_array_util_t::elem_util::count(result[0], 2) == 1,
                    $sformatf("diff_into should preserve preexisting result content in bank 0 result=%p", result));
-        check_true(int_set_array_util_t::set_elem_util_t::count(result[1], 10) == 1,
+        check_true(int_set_array_util_t::elem_util::count(result[1], 10) == 1,
                    $sformatf("diff_into should keep lhs-only bank 1 key result=%p lhs=%p rhs=%p", result, lhs, rhs));
-        check_true(int_set_array_util_t::set_elem_util_t::count(result[2], 20) == 1,
+        check_true(int_set_array_util_t::elem_util::count(result[2], 20) == 1,
                    $sformatf("diff_into should preserve preexisting result content in bank 2 result=%p", result));
-        check_true(int_set_array_util_t::set_elem_util_t::count(result[3], 99) == 1,
+        check_true(int_set_array_util_t::elem_util::count(result[3], 99) == 1,
                    $sformatf("diff_into should preserve unrelated preexisting result bank content result=%p", result));
 
         exact_diff = int_set_array_util_t::get_diff(lhs, rhs);
         check_true(exact_diff[0].size() == 1 &&
-                   int_set_array_util_t::set_elem_util_t::count(exact_diff[0], 1) == 1,
+                   int_set_array_util_t::elem_util::count(exact_diff[0], 1) == 1,
                    $sformatf("get_diff should return pure bank difference exact_diff=%p", exact_diff));
-        check_true(int_set_array_util_t::set_elem_util_t::count(exact_diff[1], 10) == 1,
+        check_true(int_set_array_util_t::elem_util::count(exact_diff[1], 10) == 1,
                    $sformatf("get_diff should preserve lhs-only bank content exact_diff=%p", exact_diff));
 
         int_set_array_util_t::diff_with(lhs, rhs);
         check_true(lhs[0].size() == 1 &&
-                   int_set_array_util_t::set_elem_util_t::count(lhs[0], 1) == 1,
+                   int_set_array_util_t::elem_util::count(lhs[0], 1) == 1,
                    $sformatf("diff_with should mutate bank 0 to lhs-only keys lhs=%p", lhs));
-        check_true(int_set_array_util_t::set_elem_util_t::count(lhs[1], 10) == 1,
+        check_true(int_set_array_util_t::elem_util::count(lhs[1], 10) == 1,
                    $sformatf("diff_with should preserve lhs-only bank 1 key lhs=%p", lhs));
         check_true(lhs[2].size() == 0,
                    $sformatf("diff_with should clear shared-only bank 2 lhs=%p", lhs));
@@ -189,9 +189,9 @@ module set_array_util_tb;
     task automatic test_print_demo();
         int_set_array_t a;
 
-        void'(int_set_array_util_t::set_elem_util_t::insert(a[0], 1));
-        void'(int_set_array_util_t::set_elem_util_t::insert(a[1], 10));
-        void'(int_set_array_util_t::set_elem_util_t::insert(a[3], 30));
+        void'(int_set_array_util_t::elem_util::insert(a[0], 1));
+        void'(int_set_array_util_t::elem_util::insert(a[1], 10));
+        void'(int_set_array_util_t::elem_util::insert(a[3], 30));
 
         $display("%s", int_set_array_util_t::sprint(a, "demo_array"));
         int_set_array_util_t::print(a, "demo_array");

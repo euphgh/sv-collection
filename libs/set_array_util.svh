@@ -27,8 +27,8 @@
  * @tparam UNIQUE_ELEM whether each slot behaves as a unique-element set.
  */
 class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
-    typedef set_util#(DATA_T, UNIQUE_ELEM) set_elem_util_t;
-    typedef set_elem_util_t::set_t set_t;
+    typedef set_util#(DATA_T, UNIQUE_ELEM) elem_util;
+    typedef elem_util::set_t set_t;
     typedef set_t set_array_t[SIZE];
 
     /**
