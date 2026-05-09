@@ -26,7 +26,7 @@
  * @tparam SIZE fixed number of slots in the array.
  * @tparam UNIQUE_ELEM whether each slot behaves as a unique-element set.
  */
-class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
+class set_array_util #(type DATA_T = int, int unsigned SIZE = 32, bit UNIQUE_ELEM = 1);
     typedef set_util#(DATA_T, UNIQUE_ELEM) elem_util;
     typedef elem_util::set_t set_t;
     typedef set_t set_array_t[SIZE];
@@ -212,7 +212,7 @@ class set_array_util #(type DATA_T = int, int SIZE = 32, bit UNIQUE_ELEM = 1);
 
         foreach (array[i]) begin
             s = {s, $sformatf("[%0d]: %p", i, array[i])};
-            if (i != SIZE - 1)
+            if (i != int'(SIZE - 1))
                 s = {s, "\n"};
         end
 

@@ -39,7 +39,6 @@ module aa_value_adapter_array_util_tb;
     typedef int_adapter_array_util_t::aa_of_q_array_t int_aa_of_q_array_t;
     typedef int_adapter_array_util_t::aa_t int_aa_t;
     typedef int_adapter_array_util_t::aa_array_t int_aa_array_t;
-    typedef set_util#(int unsigned) int_set_util_t;
 
     task automatic check_aa_of_q_equals(const ref int_aa_of_q_t actual,
                                         const ref int_aa_of_q_t expected,

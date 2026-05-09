@@ -1,6 +1,6 @@
 -f filelist/lib.f
--f filelist/testbench.f
--Weverything 
+tests/collection_smoke_tb.sv
+-Weverything
 -Werror=unused
 --std 1800-2017
 --compat vcs

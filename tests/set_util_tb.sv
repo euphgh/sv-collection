@@ -217,7 +217,7 @@ module set_util_tb;
     endtask
 
     task automatic test_empty_set_operations();
-        int_set_t empty;
+        int_set_t empty = {};
         int_set_t s;
         int_set_t result;
 

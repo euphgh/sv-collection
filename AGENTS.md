@@ -153,12 +153,16 @@ When APIs are still being designed, do not rush into full implementations.
 After changing SystemVerilog source files, run at least one syntax-oriented lint
 or compile check before considering the work complete.
 
-- Prefer using the repository's existing filelists or package entry points.
-- Use `slang` or `vcs` with project-compatible options.
+- Prefer using the repository's existing filelists and scripts.
+- Use `scripts/run_slang.sh` for the full slang check, or `slang -f
+  scripts/slang.f` for a quick package-level check.
+- Use `scripts/run_vcs.sh` for VCS compile-and-run of all testbenches.
 - If full-project lint is blocked by unrelated pre-existing errors, run a
   narrower check that still covers the files you changed.
-- For library changes in this repository, `slang -I libs --std 1800-2017
-  --compat vcs libs/collection_pkg.sv` is a valid targeted syntax check.
+- For library changes in this repository, `slang -f scripts/slang.f` is the
+  standard full-project syntax check.
+- For focused testbench checks, `slang -f filelist/slang_tb.f
+  tests/<tb>.sv` carries the same strict warning flags.
 
 ## Build Artifacts
 
@@ -168,8 +172,19 @@ locations.
 - Any compile output, generated simulator files, work directories, or logs must
   live outside the tracked source tree layout used for code and docs.
 - A preferred location for generated output in this repository is `build/`.
-- When using VCS for focused testbench runs, prefer
-  `scripts/run_vcs_tb.sh`, which isolates artifacts under `build/vcs/`.
+- VCS artifacts are isolated under `build/vcs/` by `scripts/run_vcs.sh`.
+
+## Code Regeneration
+
+After editing array utility feature sources or the generator script, regenerate
+all implementation files under `libs/generated/`:
+
+```bash
+scripts/regenerate_all.sh
+```
+
+Then re-run slang and VCS checks to verify the generated code compiles and
+passes.
 
 ## Testbench Isolation
 
@@ -182,7 +197,7 @@ includes.
 - Avoid package imports in file-focused tests when the goal is to prevent
   unrelated library code from affecting the test.
 - Prefer a narrow syntax check such as
-  `slang -I libs --std 1800-2017 --compat vcs tests/aa_of_q_util_tb.sv` for
+  `slang -f filelist/slang_tb.f tests/aa_of_q_util_tb.sv` for
   this style of isolated testbench.
 
 ## aa_of_q-style Container Rules

@@ -42,6 +42,15 @@ future `aa_*` array generators.
 
 The shared implementation lives in `scripts/generate_array_util.py`.
 
+To regenerate all generated files at once:
+
+```bash
+scripts/regenerate_all.sh
+```
+
+This iterates every feature source under `libs/` that declares a `@gen:output`
+directive and runs the generator for each one.
+
 ## Generated Output Location
 
 The output file is typically placed under `libs/generated/`.

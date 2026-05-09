@@ -314,6 +314,8 @@ module aa_util_tb;
         int_aa_t populated;
         int_aa_t result;
 
+        empty[0] = 0; empty.delete();
+
         populated[1] = 10;
 
         check_true(int_aa_util_t::equals(empty, empty),

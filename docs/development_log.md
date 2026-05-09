@@ -16,7 +16,7 @@ This file is not a feature spec. It is a short memory aid for future work.
   that return a nested class typedef directly, such as `aa_util::aa_t`.
 - Prefer keeping the affected method inline or reshaping the return type when
   that pattern appears in new code.
-- Focused VCS runs should use `scripts/run_vcs_tb.sh` so that artifacts stay
+- VCS runs should use `scripts/run_vcs.sh` so that artifacts stay
   under `build/vcs/`.
 
 ## Open TODOs

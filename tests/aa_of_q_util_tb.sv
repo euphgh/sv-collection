@@ -374,7 +374,9 @@ module aa_of_q_util_tb;
         int_aa_of_q_t empty_rhs;
         int_aa_of_q_t populated;
         int_aa_of_q_t result;
-        int_aa_of_q_t expected;
+
+        empty_lhs[0] = '{0}; empty_rhs[0] = '{0};
+        empty_lhs.delete(); empty_rhs.delete();
 
         populated[7] = {70};
         result[99] = {999};

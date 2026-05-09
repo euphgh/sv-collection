@@ -1,7 +1,9 @@
-tests/collection_smoke_tb.sv
 tests/set_util_tb.sv
 tests/set_array_util_tb.sv
 tests/aa_util_tb.sv
 tests/aa_array_util_tb.sv
-tests/multimap_util_tb.sv
-tests/multimap_array_util_tb.sv
+tests/aa_of_q_util_tb.sv
+tests/aa_of_q_array_util_tb.sv
+tests/aa_value_adapter_util_tb.sv
+tests/aa_value_adapter_array_util_tb.sv
+tests/collection_smoke_tb.sv

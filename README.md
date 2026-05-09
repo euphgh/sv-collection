@@ -20,32 +20,39 @@ testbenches under `tests/`, and high-level navigation pages under `docs/`.
 
 ## How To Use It
 
-For focused VCS runs, use the helper script:
+For slang syntax checks:
 
 ```bash
-scripts/run_vcs_tb.sh tests/set_util_tb.sv
-scripts/run_vcs_tb.sh tests/set_array_util_tb.sv
-scripts/run_vcs_tb.sh tests/aa_util_tb.sv
-scripts/run_vcs_tb.sh tests/aa_of_q_util_tb.sv
-scripts/run_vcs_tb.sh tests/aa_value_adapter_util_tb.sv
-scripts/run_vcs_tb.sh tests/collection_smoke_tb.sv
+scripts/run_slang.sh
 ```
 
-For a full verification suite that runs slang syntax checks and VCS
-compile-and-run for all testbenches, use:
+For VCS compile-and-run of all testbenches:
 
 ```bash
-scripts/run_all_tests.sh
+scripts/run_vcs.sh
 ```
+
+Both scripts read the testbench list from `filelist/testbench.f`.  The slang
+script also uses `scripts/slang.f` and `filelist/lib.f` for package-level
+checks.
 
 Use `scripts/generate_array_util.py` for the generated `set_array_util`,
 `aa_array_util`, `aa_of_q_array_util`, and `aa_value_adapter_array_util`
-implementation files.
+implementation files.  To regenerate all at once:
 
-The script keeps generated artifacts under `build/vcs/`.
+```bash
+scripts/regenerate_all.sh
+```
 
-For syntax checks, use the repository's lint flow in `scripts/slang.f` or the
-targeted `slang` commands referenced in `AGENTS.md`.
+The scripts keep generated artifacts under `build/vcs/`.
+
+For a manual full-project slang check:
+
+```bash
+slang -f scripts/slang.f
+```
+
+For targeted syntax checks, see the `slang` commands referenced in `AGENTS.md`.
 
 ## Where To Read Next
 
@@ -73,5 +80,6 @@ targeted `slang` commands referenced in `AGENTS.md`.
 - `libs/`: SystemVerilog utility code
 - `tests/`: focused testbenches
 - `docs/`: navigation pages and development notes
+- `filelist/`: source, testbench, and slang-flag file lists
 - `scripts/`: lint and VCS helpers
 - `build/`: generated output location

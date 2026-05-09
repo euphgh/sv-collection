@@ -203,7 +203,7 @@ class aa_array_util #(int unsigned SIZE = 4,
 
         foreach (aa_array[i]) begin
             s = {s, $sformatf("[%0d]: %p", i, aa_array[i])};
-            if (i != SIZE - 1)
+            if (i != int'(SIZE - 1))
                 s = {s, "\n"};
         end
 

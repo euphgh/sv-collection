@@ -417,8 +417,6 @@ function void aa_of_q_util::merge_into(
     const ref aa_of_q_t rhs,
     ref aa_of_q_t result
 );
-    aa_of_q_t tmp;
-
     foreach (lhs[key]) begin
         val_q_t queue;
 

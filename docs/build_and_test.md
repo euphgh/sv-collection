@@ -2,51 +2,59 @@
 
 ## Purpose
 
-This page points readers to the repository's helper workflow for running focused
-VCS testbench builds without polluting the git-managed source tree.
+This page points readers to the repository's helper scripts for running slang
+syntax checks and VCS testbench builds without polluting the git-managed source
+tree.
 
-Detailed tool flags belong in the script itself. This page only explains what
-the helper is for and how to invoke it.
+Detailed tool flags belong in the scripts and filelists themselves. This page
+only explains what each helper is for and how to invoke it.
 
-## Script Location
+## Filelists
 
-- `scripts/run_vcs_tb.sh`
+- `filelist/lib.f`: library source files and include paths for slang
+- `filelist/testbench.f`: all testbench source paths (used by both scripts)
+- `filelist/slang_tb.f`: slang flags for focused testbench checks (same strict
+  warnings as `scripts/slang.f`, but no library package)
+- `scripts/slang.f`: full-project slang invocation (references lib.f, adds
+  warning flags)
 
-## What The Script Does
+## Slang Syntax Check
 
-- compiles a single testbench with VCS
-- runs the compiled simulation immediately
-- places generated VCS artifacts under `build/vcs/<testbench-name>/`
-- avoids leaving `csrc/`, `ucli.key`, `simv*`, or `*.daidir` artifacts in the
-  repository root
+- `scripts/run_slang.sh`
 
-## Typical Usage
+The script runs two phases:
 
-Run a focused testbench by passing the testbench source path:
-
-```bash
-scripts/run_vcs_tb.sh tests/set_util_tb.sv
-```
-
-Optionally provide a custom simulator executable name:
-
-```bash
-scripts/run_vcs_tb.sh tests/set_util_tb.sv my_simv
-```
-
-## Full Verification Suite
-
-The `scripts/run_all_tests.sh` script runs the complete verification pipeline:
-
-1. Slang syntax check on each library source file.
-2. Slang syntax check on each focused testbench (with package where needed).
-3. VCS compile-and-run for each focused testbench and the package smoke test.
+1. **Library + smoke test**: uses `slang -f scripts/slang.f` to check the
+   package and the `collection_smoke_tb` together.
+2. **Focused testbenches**: checks each focused testbench individually using
+   `slang -f filelist/slang_tb.f`, which carries the same strict warning flags
+   but does not include the library package (focused testbenches `include
+   utilities directly).
 
 ```bash
-scripts/run_all_tests.sh
+scripts/run_slang.sh
 ```
 
-Exit status is 0 only if every check and test passes.
+For a quick manual check of the full project:
+
+```bash
+slang -f scripts/slang.f
+```
+
+## VCS Compile And Run
+
+- `scripts/run_vcs.sh`
+
+The script iterates all testbenches listed in `filelist/testbench.f`.  For each
+testbench it compiles with VCS, runs the simulation, and reports pass/fail.
+Testbenches that `import collection::` are automatically compiled with the
+library package; focused testbenches are compiled standalone with incdir only.
+
+Build artifacts are isolated under `build/vcs/<testbench-name>/`.
+
+```bash
+scripts/run_vcs.sh
+```
 
 ## Package-Level Smoke Test
 
@@ -56,12 +64,30 @@ It is the recommended integration test to run after changing shared
 infrastructure such as the generator or the package file.
 
 ```bash
-scripts/run_vcs_tb.sh tests/collection_smoke_tb.sv
+scripts/run_vcs.sh
 ```
+
+## Code Regeneration
+
+- `scripts/regenerate_all.sh`
+
+Runs `scripts/generate_array_util.py` for every array utility feature source
+that has a `@gen:output` directive.  Overwrites all files under
+`libs/generated/`.
+
+```bash
+scripts/regenerate_all.sh
+```
+
+Run this after editing array utility feature sources or the generator script
+itself, then re-run the slang and VCS checks to verify.
 
 ## Where To Look Next
 
-- read `scripts/run_vcs_tb.sh` for the exact invocation details
+- read `scripts/run_slang.sh` and `scripts/run_vcs.sh` for exact invocation
+  details
+- read the filelists under `filelist/` for the source of truth on which files
+  are compiled
 - read the target testbench under `tests/` for the specific test scope
 - read `AGENTS.md` for repository rules about build artifacts and isolated
   testbench flows

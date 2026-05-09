@@ -1,0 +1,5 @@
+-I libs
+--std 1800-2017
+--compat vcs
+-Weverything
+-Werror=unused

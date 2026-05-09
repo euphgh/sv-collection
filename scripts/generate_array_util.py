@@ -36,7 +36,7 @@ class ArrayFeatureRenderer:
         call_args = func.render_call_args("i", forward_custom=True)
 
         return f"""function void {class_name}::{func.name}({decl_params});
-    for (int i = 0; i < {array_dim_name}; i++)
+    for (int unsigned i = 0; i < {array_dim_name}; i++)
         {self.elem_util_name}::{func.name}({call_args});
 endfunction : {func.name}
 """

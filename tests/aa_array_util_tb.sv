@@ -39,7 +39,6 @@ module aa_array_util_tb;
     `include "tests_util.svh"
 
     typedef aa_array_util#(4, int unsigned, int unsigned) int_aa_array_util_t;
-    typedef int_aa_array_util_t::aa_t int_aa_t;
     typedef int_aa_array_util_t::aa_array_t int_aa_array_t;
     typedef int unsigned key_q_t[$];
     typedef int_aa_array_util_t::key_set_array_t int_key_set_array_t;
