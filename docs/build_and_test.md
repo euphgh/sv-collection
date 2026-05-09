@@ -34,6 +34,31 @@ Optionally provide a custom simulator executable name:
 scripts/run_vcs_tb.sh tests/set_util_tb.sv my_simv
 ```
 
+## Full Verification Suite
+
+The `scripts/run_all_tests.sh` script runs the complete verification pipeline:
+
+1. Slang syntax check on each library source file.
+2. Slang syntax check on each focused testbench (with package where needed).
+3. VCS compile-and-run for each focused testbench and the package smoke test.
+
+```bash
+scripts/run_all_tests.sh
+```
+
+Exit status is 0 only if every check and test passes.
+
+## Package-Level Smoke Test
+
+The `tests/collection_smoke_tb.sv` testbench imports all utilities through
+`import collection::*` and validates core API behavior for each utility class.
+It is the recommended integration test to run after changing shared
+infrastructure such as the generator or the package file.
+
+```bash
+scripts/run_vcs_tb.sh tests/collection_smoke_tb.sv
+```
+
 ## Where To Look Next
 
 - read `scripts/run_vcs_tb.sh` for the exact invocation details

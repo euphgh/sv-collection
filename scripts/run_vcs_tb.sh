@@ -44,8 +44,16 @@ fi
 incdir_arg="+incdir+$repo_root/libs+$repo_root/tests"
 export LD_LIBRARY_PATH="$compat_dir${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
+vcs_args=("$incdir_arg")
+
+if grep -q 'import collection::' "$tb_abs" 2>/dev/null; then
+    vcs_args+=("$repo_root/libs/collection_pkg.sv")
+fi
+
+vcs_args+=("$tb_abs")
+
 (
     cd "$run_dir"
-    vcs -sverilog -full64 "$incdir_arg" "$tb_abs" -o "$simv_name"
+    vcs -sverilog -full64 "${vcs_args[@]}" -o "$simv_name"
     "./$simv_name" "$@"
 )

@@ -28,6 +28,14 @@ scripts/run_vcs_tb.sh tests/set_array_util_tb.sv
 scripts/run_vcs_tb.sh tests/aa_util_tb.sv
 scripts/run_vcs_tb.sh tests/aa_of_q_util_tb.sv
 scripts/run_vcs_tb.sh tests/aa_value_adapter_util_tb.sv
+scripts/run_vcs_tb.sh tests/collection_smoke_tb.sv
+```
+
+For a full verification suite that runs slang syntax checks and VCS
+compile-and-run for all testbenches, use:
+
+```bash
+scripts/run_all_tests.sh
 ```
 
 Use `scripts/generate_array_util.py` for the generated `set_array_util`,
