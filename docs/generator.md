@@ -17,8 +17,9 @@ mechanical repetition.
 This strategy applies to array-style helpers such as:
 
 - `set_array_util`
-- future array forms of `aa_util`
-- future array forms of `aa_of_q_util`
+- `aa_array_util`
+- `aa_of_q_array_util`
+- `aa_value_adapter_array_util`
 - future array forms of `aa_value_adapter_util`
 
 Use this page as orientation, then read the source comments in the feature file

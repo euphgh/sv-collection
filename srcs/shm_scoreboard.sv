@@ -40,8 +40,8 @@ class shm_scoreboard;
         foreach(ref_records[i]) begin
             shm_wtrans_item old_trans = ref_records[i];
             // continue if empty
-            waddr_set_t old_trans_waddrs = wmap_util::get_key_sets(old_trans.wmap);
-            waddr_set_t new_trans_waddrs = wmap_util::get_key_sets(new_creq.wmap);
+            waddr_set_t old_trans_waddrs = wmap_util::get_keys(old_trans.wmap);
+            waddr_set_t new_trans_waddrs = wmap_util::get_keys(new_creq.wmap);
             wmap_t expired_old_addrs = wmap_util::get_intersect(old_trans.wmap, new_creq.wmap);
             foreach(expired_old_addrs[bank, addr]) begin
                 trans_expired[i][bank][addr] = new_creq.issue_time;
@@ -52,10 +52,10 @@ class shm_scoreboard;
     task scan_time_out_creq();
         foreach(ref_records[i]) begin
             shm_wtrans_item curr_trans = ref_records[i];
-            waddr_set_t curr_matched = tmap_util::get_key_sets(trans_matched[i]);
-            waddr_set_t curr_expired = tmap_util::get_key_sets(trans_expired[i]);
+            waddr_set_t curr_matched = tmap_util::get_keys(trans_matched[i]);
+            waddr_set_t curr_expired = tmap_util::get_keys(trans_expired[i]);
             waddr_set_t hited_addrs = waddr_util::get_union(curr_matched, curr_expired);
-            waddr_set_t trans_origin_addrs = wmap_util::get_key_sets(curr_trans.wmap);
+            waddr_set_t trans_origin_addrs = wmap_util::get_keys(curr_trans.wmap);
             bit ok = waddr_util::contains_set_array(hited_addrs, trans_origin_addrs);
             if (ok) begin
                 // pop it
@@ -65,13 +65,13 @@ class shm_scoreboard;
 
     task compare_dut_with_ref();
         wmap_t vlm_wmap;
-        waddr_set_t vlm_waddrs = wmap_util::get_key_sets(vlm_wmap);
+        waddr_set_t vlm_waddrs = wmap_util::get_keys(vlm_wmap);
 
         wmap_t matched_final_wmap = wmap_util::get_intersect_merge_with(wmap_final, vlm_wmap);
-        waddr_set_t matched_final_waddr = wmap_util::get_key_sets(matched_final_wmap);
+        waddr_set_t matched_final_waddr = wmap_util::get_keys(matched_final_wmap);
 
         wmap_t matched_expired_wmap = wmmap_util::get_intersect_with_aa_array(wmap_expired, vlm_wmap);
-        waddr_set_t matched_expired_waddr = wmap_util::get_key_sets(matched_expired_wmap);
+        waddr_set_t matched_expired_waddr = wmap_util::get_keys(matched_expired_wmap);
 
         waddr_set_t hited_addrs = waddr_util::get_union(matched_final_waddr, matched_expired_waddr);
         bit ok = waddr_util::contains_set_array(hited_addrs, vlm_waddrs);

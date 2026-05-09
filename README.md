@@ -15,6 +15,7 @@ testbenches under `tests/`, and high-level navigation pages under `docs/`.
 - `aa_of_q_util`: associative-array-of-queue utilities for multimap-style
   containers
 - `aa_value_adapter_util`: bridge between `aa_of_q_t` and `aa_t`
+- `aa_value_adapter_array_util`: fixed-size array adapter between `aa_of_q_array_t` and `aa_array_t`
 - related array and multimap wrappers that build on the same collection model
 
 ## How To Use It
@@ -29,8 +30,9 @@ scripts/run_vcs_tb.sh tests/aa_of_q_util_tb.sv
 scripts/run_vcs_tb.sh tests/aa_value_adapter_util_tb.sv
 ```
 
-Use `scripts/generate_array_util.py` for the generated `set_array_util` and
-`aa_array_util` implementation files.
+Use `scripts/generate_array_util.py` for the generated `set_array_util`,
+`aa_array_util`, `aa_of_q_array_util`, and `aa_value_adapter_array_util`
+implementation files.
 
 The script keeps generated artifacts under `build/vcs/`.
 
@@ -54,6 +56,7 @@ targeted `slang` commands referenced in `AGENTS.md`.
 - `docs/aa_of_q_array_util.md`
 - `docs/aa_of_q_util.md`
 - `docs/aa_value_adapter_util.md`
+- `docs/aa_value_adapter_array_util.md`
 - `docs/build_and_test.md`
 - `docs/development_log.md`
 
