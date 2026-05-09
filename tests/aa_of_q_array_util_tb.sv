@@ -34,7 +34,7 @@
 //    - get_diff returns only lhs-only bank content
 //    - diff_with mutates lhs in place
 // 6. projections
-//    - get_key_sets returns the visible keys of each bank
+//    - get_keys returns the visible keys of each bank
 //    - get_value_sets returns the flattened visible values of each bank
 // 7. print helpers
 //    - sprint formats one array element per line
@@ -255,14 +255,14 @@ module aa_of_q_array_util_tb;
         expected_values_0 = '{10, 20, 30};
         expected_values_1 = '{40, 41};
 
-        key_sets = int_aa_of_q_array_util_t::get_key_sets(a);
+        key_sets = int_aa_of_q_array_util_t::get_keys(a);
         value_sets = int_aa_of_q_array_util_t::get_value_sets(a);
 
         check_true(int_aa_of_q_array_util_t::elem_util::key_set_util::equals(key_sets[0], expected_keys_0),
-                   "get_key_sets should return the visible keys of bank 0",
+                   "get_keys should return the visible keys of bank 0",
                    $sformatf("key_sets=%p", key_sets));
         check_true(int_aa_of_q_array_util_t::elem_util::key_set_util::equals(key_sets[1], expected_keys_1),
-                   "get_key_sets should return the visible keys of bank 1",
+                   "get_keys should return the visible keys of bank 1",
                    $sformatf("key_sets=%p", key_sets));
         check_true(int_aa_of_q_array_util_t::elem_util::val_set_util::equals(value_sets[0], expected_values_0),
                    "get_value_sets should flatten visible values of bank 0",

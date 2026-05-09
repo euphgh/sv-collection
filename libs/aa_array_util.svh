@@ -177,14 +177,14 @@ class aa_array_util #(int unsigned SIZE = 4,
      * @param aa_array array to inspect.
      * @return an array of per-bank key sets.
      */
-    static function key_set_array_t get_key_sets(const ref aa_array_t aa_array);
+    static function key_set_array_t get_keys(const ref aa_array_t aa_array);
         key_set_array_t result;
 
         for (int unsigned i = 0; i < SIZE; i++)
             result[i] = elem_util::get_keys(aa_array[i]);
 
         return result;
-    endfunction : get_key_sets
+    endfunction : get_keys
 
     /**
      * @brief Returns a row-based string representation of the array.

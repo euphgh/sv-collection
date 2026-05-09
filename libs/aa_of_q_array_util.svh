@@ -16,7 +16,7 @@
  * does so.
  *
  * The `clean()` helper normalizes each bank in place.
- * The `get_key_sets()` and `get_value_sets()` helpers project each bank into
+ * The `get_keys()` and `get_value_sets()` helpers project each bank into
  * a corresponding set container.
  * The `sprint` / `print` helpers format one array element per output line.
  *
@@ -200,14 +200,14 @@ class aa_of_q_array_util #(int unsigned SIZE = 4,
      * @param aa_of_q_array array to inspect.
      * @return an array of per-bank key sets.
      */
-    static function key_set_array_t get_key_sets(const ref aa_of_q_array_t aa_of_q_array);
+    static function key_set_array_t get_keys(const ref aa_of_q_array_t aa_of_q_array);
         key_set_array_t result;
 
         for (int unsigned i = 0; i < SIZE; i++)
             result[i] = elem_util::get_keys(aa_of_q_array[i]);
 
         return result;
-    endfunction : get_key_sets
+    endfunction : get_keys
 
     /**
      * @brief Returns the value set for every bank.

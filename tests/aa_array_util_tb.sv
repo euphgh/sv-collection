@@ -30,7 +30,7 @@
 //    - get_diff returns only lhs-only bank content
 //    - diff_with mutates lhs in place
 // 5. projections
-//    - get_key_sets returns the key sets for all banks
+//    - get_keys returns the key sets for all banks
 // 6. print helpers
 //    - sprint formats one array element per line
 //    - print emits the same row-based view
@@ -231,18 +231,18 @@ module aa_array_util_tb;
         banks[0][2] = 20;
         banks[2][8] = 80;
 
-        key_sets = int_aa_array_util_t::get_key_sets(banks);
+        key_sets = int_aa_array_util_t::get_keys(banks);
         check_true(key_sets[0].size() == 2 &&
                    key_set_contains(key_sets[0], 1) &&
                    key_set_contains(key_sets[0], 2),
-                   "get_key_sets should return bank 0 key set",
+                   "get_keys should return bank 0 key set",
                    $sformatf("key_sets=%p", key_sets));
         check_true(key_sets[2].size() == 1 &&
                    key_set_contains(key_sets[2], 8),
-                   "get_key_sets should return bank 2 key set",
+                   "get_keys should return bank 2 key set",
                    $sformatf("key_sets=%p", key_sets));
         check_true(key_sets[1].size() == 0,
-                   "get_key_sets should return empty set for empty bank",
+                   "get_keys should return empty set for empty bank",
                    $sformatf("key_sets=%p", key_sets));
 
         $display("%s", int_aa_array_util_t::sprint(banks, "demo_array"));
