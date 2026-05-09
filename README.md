@@ -11,6 +11,7 @@ testbenches under `tests/`, and high-level navigation pages under `docs/`.
 - `set_array_util`: fixed-size array-of-set utilities
 - `aa_util`: associative-array utilities for map-style containers
 - `aa_array_util`: fixed-size array-of-associative-array utilities
+- `aa_of_q_array_util`: fixed-size array-of-multimap utilities
 - `aa_of_q_util`: associative-array-of-queue utilities for multimap-style
   containers
 - `aa_value_adapter_util`: bridge between `aa_of_q_t` and `aa_t`
@@ -50,6 +51,7 @@ targeted `slang` commands referenced in `AGENTS.md`.
 - `docs/set_array_util.md`
 - `docs/aa_util.md`
 - `docs/aa_array_util.md`
+- `docs/aa_of_q_array_util.md`
 - `docs/aa_of_q_util.md`
 - `docs/aa_value_adapter_util.md`
 - `docs/build_and_test.md`
