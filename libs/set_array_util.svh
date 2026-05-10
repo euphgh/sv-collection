@@ -197,7 +197,8 @@ class set_array_util #(type DATA_T = int, int unsigned SIZE = 32, bit UNIQUE_ELE
     /**
      * @brief Returns a row-based string representation of the array.
      *
-     * Each output line corresponds to one array element.
+     * Each slot is formatted by `elem_util::sprint` with %x formatting.
+     * Slots are separated by newlines and the slot index is printed in hex.
      *
      * @param array array to format.
      * @param name label printed before the rows.
@@ -208,13 +209,13 @@ class set_array_util #(type DATA_T = int, int unsigned SIZE = 32, bit UNIQUE_ELE
                                  input string name = "bank_mem");
         string s;
 
-        s = {name, "\n"};
+        if (name.len() > 0)
+            s = {name, ":"};
+        else
+            s = "";
 
-        foreach (array[i]) begin
-            s = {s, $sformatf("[%0d]: %p", i, array[i])};
-            if (i != int'(SIZE - 1))
-                s = {s, "\n"};
-        end
+        foreach (array[i])
+            s = {s, $sformatf("\n  [%0x]: ", i), elem_util::sprint(array[i], "")};
 
         return s;
     endfunction : sprint

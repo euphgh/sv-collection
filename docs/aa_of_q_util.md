@@ -22,6 +22,7 @@ This feature covers:
 - normalized representation rules for visible keys
 - helper APIs for observation, mutation, normalization, and collection-style
   operations
+- hex-format debug printing via `sprint` and `print`
 
 Current high-level status:
 
@@ -32,6 +33,9 @@ Current high-level status:
 - keys whose `intersect_into()` / `diff_into()` result is empty are left
   unchanged in `result`
 - value-queue behavior continues to delegate to `set_util`
+- `sprint` and `print` format each key with `%x` and delegate value-queue
+  formatting to `val_set_util::sprint` (also `%x`); the output is one
+  `key: {v0, v1, ...}` pair per indented line under the name
 
 ## Where To Read The Code
 

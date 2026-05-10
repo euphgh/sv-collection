@@ -311,6 +311,47 @@ class aa_util #(type KEY_T = int, type VAL_T = real);
 
         return values;
     endfunction : get_values
+
+    /**
+     * @brief Returns a string representation of the associative array in hex
+     * format.
+     *
+     * Each key-value pair is printed with %x formatting, one pair per line.
+     *
+     * @param a associative array to format.
+     * @param name label printed before the entries.
+     * @return a formatted string for debugging.
+     */
+    static function string sprint(const ref aa_t a, input string name = "aa");
+        string s;
+        int unsigned idx;
+
+        if (name.len() > 0)
+            s = {name, ":"};
+        else
+            s = "";
+
+        idx = 0;
+        foreach (a[k]) begin
+            s = {s, $sformatf("\n  %0x = %0x", k, a[k])};
+            idx++;
+        end
+        if (idx == 0)
+            s = {s, " (empty)"};
+
+        return s;
+    endfunction : sprint
+
+    /**
+     * @brief Prints the string representation of the associative array in hex
+     * format.
+     *
+     * @param a associative array to print.
+     * @param name label printed before the entries.
+     */
+    static function void print(const ref aa_t a, input string name = "aa");
+        $display("%s", sprint(a, name));
+    endfunction : print
 endclass : aa_util
 
 `endif

@@ -227,7 +227,8 @@ class aa_of_q_array_util #(int unsigned SIZE = 4,
     /**
      * @brief Returns a row-based string representation of the array.
      *
-     * Each output line corresponds to one array element.
+     * Each slot is formatted by `elem_util::sprint` with %x formatting.
+     * Slots are separated by newlines and the slot index is printed in hex.
      *
      * @param aa_of_q_array array to format.
      * @param name label printed before the rows.
@@ -237,12 +238,21 @@ class aa_of_q_array_util #(int unsigned SIZE = 4,
                                   input string name = "bank_mem");
         string s;
 
-        s = {name, "\n"};
+        if (name.len() > 0)
+            s = {name, ":"};
+        else
+            s = "";
 
         foreach (aa_of_q_array[i]) begin
-            s = {s, $sformatf("[%0d]: %p", i, aa_of_q_array[i])};
-            if (i != int'(SIZE - 1))
-                s = {s, "\n"};
+            string elem_s;
+
+            elem_s = elem_util::sprint(aa_of_q_array[i], "");
+            if (elem_s.len() == 0 || elem_s == " (empty)") begin
+                s = {s, $sformatf("\n  [%0x]: (empty)", i)};
+            end else begin
+                s = {s, $sformatf("\n  [%0x]:", i)};
+                s = {s, _indent(elem_s, "    ")};
+            end
         end
 
         return s;
@@ -258,6 +268,41 @@ class aa_of_q_array_util #(int unsigned SIZE = 4,
                                input string name = "bank_mem");
         $display("%s", sprint(aa_of_q_array, name));
     endfunction : print
+
+    /**
+     * @brief Prepends a prefix to every line in a multi-line string.
+     *
+     * @param text input text, may contain newlines.
+     * @param prefix string to prepend to each line.
+     * @return the indented text.
+     */
+    static function string _indent(input string text, input string prefix);
+        string s;
+        int pos;
+        int len;
+
+        s = "";
+        len = text.len();
+        pos = 0;
+        while (pos < len) begin
+            int next;
+
+            next = 0;
+            while (pos + next < len && text[pos + next] != "\n")
+                next++;
+
+            if (next > 0)
+                s = {s, prefix, text.substr(pos, pos + next - 1)};
+
+            pos = pos + next;
+            if (pos < len) begin
+                s = {s, "\n"};
+                pos++;
+            end
+        end
+
+        return s;
+    endfunction : _indent
 endclass : aa_of_q_array_util
 
 // @gen:output

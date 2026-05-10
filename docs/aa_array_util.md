@@ -21,7 +21,8 @@ This feature covers:
 - pointwise collection operations across array banks
 - per-bank delegation to `aa_util`
 - projection of per-bank key sets via `aa_util`
-- row-based debug printing for whole array containers
+- row-based debug printing for whole array containers, delegating slot
+  formatting to `elem_util::sprint` with `%x` formatting
 
 Current high-level status:
 
@@ -30,7 +31,10 @@ Current high-level status:
 - `*_into()` follows `aa_util` semantics within each bank and does not clear
   unrelated content in the destination bank
 - key projection is bank-local and is obtained by calling `aa_util` on each bank
-- print helpers are array-oriented and render one bank per line
+- print helpers are array-oriented and delegate bank formatting to
+  `elem_util::sprint`, which uses `%x` for keys and values; non-empty banks
+  show indented key=value lines under the bank index, empty banks show
+  `(empty)`
 
 ## Where To Read The Code
 

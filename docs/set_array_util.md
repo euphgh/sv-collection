@@ -21,7 +21,7 @@ This feature covers:
 - elementwise union, intersection, and difference
 - per-slot delegation to `set_util`
 - normalized set behavior inside each slot
-- array-level print helpers for debugging each slot as one line
+- array-level print helpers for debugging each slot via `elem_util::sprint`
 
 Current high-level status:
 
@@ -33,7 +33,8 @@ Current high-level status:
   not clear pre-existing content in `result[i]`
 - `set_array_util` intentionally exposes a subset of `set_util`, not a slot-
   local wrapper over the full queue API
-- print helpers are array-oriented and render one array element per line
+- print helpers are array-oriented and delegate slot formatting to
+  `elem_util::sprint`, which uses `%x` for elements
 
 ## API Review
 
@@ -66,11 +67,21 @@ Why:
 
 ## Print Format
 
-The intended print format is row-based.
+The print helpers delegate slot formatting to `elem_util::sprint`.
 
-- each output line corresponds to one `set_array_t` element
-- each line prints the slot index and the set stored in that slot
+- each slot is formatted as `[%0x]: <set content>`
+- set content uses `%x` formatting with comma-separated values in braces
+- slots are separated by newlines
 - the format is meant for debugging and inspection, not for round-tripping
+
+Example output:
+```
+name:
+  [0]: {1, 2}
+  [1]: {a}
+  [2]: {}
+  [3]: {}
+```
 
 ## Where To Read The Code
 

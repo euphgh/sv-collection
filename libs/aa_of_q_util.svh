@@ -338,6 +338,28 @@ class aa_of_q_util #(
      * @post `a` does not contain keys mapped to empty queues.
      */
     extern static function void clean(ref aa_of_q_t a);
+
+    /**
+     * @brief Returns a string representation of the multimap in hex format.
+     *
+     * Each key is printed with %x formatting. The value queue for each key is
+     * formatted by `val_set_util::sprint` with %x formatting.
+     *
+     * @param a multimap to format.
+     * @param name label printed before the entries.
+     * @return a formatted string for debugging.
+     */
+    extern static function string sprint(const ref aa_of_q_t a,
+                                         input string name = "aa_of_q");
+
+    /**
+     * @brief Prints the string representation of the multimap in hex format.
+     *
+     * @param a multimap to print.
+     * @param name label printed before the entries.
+     */
+    extern static function void print(const ref aa_of_q_t a,
+                                      input string name = "aa_of_q");
 endclass : aa_of_q_util
 
 function bit aa_of_q_util::equals(
@@ -513,5 +535,29 @@ function void aa_of_q_util::clean(ref aa_of_q_t a);
     foreach (keys_to_delete[i])
         a.delete(keys_to_delete[i]);
 endfunction : clean
+
+function string aa_of_q_util::sprint(const ref aa_of_q_t a, input string name);
+    string s;
+    int unsigned idx;
+
+    if (name.len() > 0)
+        s = {name, ":"};
+    else
+        s = "";
+
+    idx = 0;
+    foreach (a[k]) begin
+        s = {s, $sformatf("\n  %0x: ", k), val_set_util::sprint(a[k], "")};
+        idx++;
+    end
+    if (idx == 0)
+        s = {s, " (empty)"};
+
+    return s;
+endfunction : sprint
+
+function void aa_of_q_util::print(const ref aa_of_q_t a, input string name);
+    $display("%s", sprint(a, name));
+endfunction : print
 
 `endif

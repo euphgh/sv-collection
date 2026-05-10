@@ -20,12 +20,15 @@ This feature covers:
 - value lookup helpers
 - collection-style operations such as merge, intersect, and diff
 - projection helpers for extracting key and value views
+- hex-format debug printing via `sprint` and `print`
 
 Current high-level status:
 
 - `contains_keys` is kept as a user-facing helper for direct key-set checks
 - `*_into()` uses append-into-result semantics
 - `get_values()` returns a raw queue view and preserves repeated values
+- `sprint` and `print` format each key and value with `%x`; the output is
+  one `key = value` pair per indented line under the name
 
 ## Where To Read The Code
 

@@ -20,6 +20,7 @@ This feature covers:
 - behavior that depends on `UNIQUE_ELEM`
 - an in-place normalization helper for turning a general queue into a
   set-shaped queue
+- hex-format debug printing via `sprint` and `print`
 
 Current high-level status:
 
@@ -27,6 +28,8 @@ Current high-level status:
 - `UNIQUE_ELEM == 0` currently supports the basic queue-oriented helpers and
   normalization flow; duplicate-sensitive collection semantics are intentionally
   deferred until that contract is finalized
+- `sprint` and `print` format each element with `%x`; the output is
+  `name:\n  {elem0, elem1, ...}` (comma-separated, single line)
 
 ## Where To Read The Code
 

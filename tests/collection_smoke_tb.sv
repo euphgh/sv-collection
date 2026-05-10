@@ -66,6 +66,8 @@ module collection_smoke_tb;
         exact = int_set_util_t::get_diff(lhs, rhs);
         check_true(exact.size() == 1 && int_set_util_t::count(exact, 1) == 1,
                    "set_util::get_diff should return lhs-only elements");
+
+        int_set_util_t::print(lhs, "set_util lhs");
     endtask
 
     // -----------------------------------------------------------------------
@@ -100,6 +102,8 @@ module collection_smoke_tb;
         int_set_array_util_t::diff_with(lhs, rhs);
         check_true(int_set_array_util_t::elem_util::count(lhs[0], 1) == 1,
                    "set_array_util::diff_with should keep lhs-only slot content");
+
+        int_set_array_util_t::print(lhs, "set_array_util lhs");
     endtask
 
     // -----------------------------------------------------------------------
@@ -139,6 +143,8 @@ module collection_smoke_tb;
         required[3] = 1'b1;
         check_true(int_aa_util_t::contains_keys(merged, required),
                    "aa_util::contains_keys should accept key subsets");
+
+        int_aa_util_t::print(lhs, "aa_util lhs");
     endtask
 
     // -----------------------------------------------------------------------
@@ -175,6 +181,8 @@ module collection_smoke_tb;
         key_sets = int_aa_array_util_t::get_keys(lhs);
         check_true(int_aa_array_util_t::elem_util::key_set_util::count(key_sets[0], 1) == 1,
                    "aa_array_util::get_keys should return per-bank key sets");
+
+        int_aa_array_util_t::print(lhs, "aa_array_util lhs");
     endtask
 
     // -----------------------------------------------------------------------
@@ -227,6 +235,8 @@ module collection_smoke_tb;
         values = int_aa_of_q_util_t::get_values(lhs);
         check_true(values.size() > 0,
                    "aa_of_q_util::get_values should return flattened visible values");
+
+        int_aa_of_q_util_t::print(lhs, "aa_of_q_util lhs");
     endtask
 
     // -----------------------------------------------------------------------
@@ -273,6 +283,8 @@ module collection_smoke_tb;
         val_sets = int_aa_of_q_array_util_t::get_value_sets(lhs);
         check_true(val_sets[0].size() > 0,
                    "aa_of_q_array_util::get_value_sets should return per-bank value sets");
+
+        int_aa_of_q_array_util_t::print(lhs, "aa_of_q_array_util lhs");
     endtask
 
     // -----------------------------------------------------------------------

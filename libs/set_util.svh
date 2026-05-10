@@ -251,6 +251,28 @@ class set_util #(type KEY_T = real, bit UNIQUE_ELEM = 1);
     extern static function void diff_with(ref set_t lhs,
                                           const ref set_t rhs);
 
+    /**
+     * @brief Returns a string representation of the set in hex format.
+     *
+     * Each element is printed with %x formatting. Elements are separated by
+     * spaces and enclosed in braces.
+     *
+     * @param set set to format.
+     * @param name label printed before the elements.
+     * @return a formatted string for debugging.
+     */
+    extern static function string sprint(const ref set_t set,
+                                         input string name = "set");
+
+    /**
+     * @brief Prints the string representation of the set in hex format.
+     *
+     * @param set set to print.
+     * @param name label printed before the elements.
+     */
+    extern static function void print(const ref set_t set,
+                                      input string name = "set");
+
     // ---------------------------------------------------------------------
     // Private helpers
     // ---------------------------------------------------------------------
@@ -384,5 +406,28 @@ endfunction : diff_with
 function bit set_util::_has(const ref set_t set, input KEY_T key);
     return count(set, key) != 0;
 endfunction : _has
+
+function string set_util::sprint(const ref set_t set, input string name);
+    string s;
+
+    if (name.len() > 0)
+        s = {name, ":\n  "};
+    else
+        s = "";
+
+    s = {s, "{"};
+    foreach (set[i]) begin
+        s = {s, $sformatf("%0x", set[i])};
+        if (i != set.size() - 1)
+            s = {s, ", "};
+    end
+    s = {s, "}"};
+
+    return s;
+endfunction : sprint
+
+function void set_util::print(const ref set_t set, input string name);
+    $display("%s", sprint(set, name));
+endfunction : print
 
 `endif
